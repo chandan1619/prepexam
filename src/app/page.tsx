@@ -140,16 +140,16 @@ export default function Home() {
               <div className="relative bg-gradient-to-b from-blue-900 to-purple-900 rounded-2xl p-8 shadow-2xl">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl">
-                    <h3 className="text-2xl font-bold mb-2">1L+</h3>
+                    <h3 className="text-2xl font-bold mb-2">100+</h3>
                     <p className="text-blue-100">Students Enrolled</p>
                   </div>
                   <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl">
-                    <h3 className="text-2xl font-bold mb-2">85%</h3>
+                    <h3 className="text-2xl font-bold mb-2">95%</h3>
                     <p className="text-blue-100">Success Rate</p>
                   </div>
                   <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl">
-                    <h3 className="text-2xl font-bold mb-2">50+</h3>
-                    <p className="text-blue-100">Exam Categories</p>
+                    <h3 className="text-2xl font-bold mb-2">1</h3>
+                    <p className="text-blue-100">Exam Category</p>
                   </div>
                   <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl">
                     <h3 className="text-2xl font-bold mb-2">24/7</h3>

@@ -133,41 +133,61 @@ export default function BlogListPage() {
                     href={`/blog/${blog.slug}`}
                     className="group"
                   >
-                    <article className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 h-full">
-                      <div className="p-8 flex flex-col h-full">
-                        <div className="flex items-center gap-2 mb-4">
-                          <span className="py-1 px-2 text-xs font-semibold bg-blue-100 text-blue-700 rounded-md">
-                            {blog.module.exam.title}
+                    <article className="relative bg-gradient-to-br from-white via-blue-50/30 to-purple-50/30 rounded-3xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100/50 backdrop-blur-sm h-full">
+                      {/* Gradient overlay for visual appeal */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      
+                      {/* Decorative top border */}
+                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+                      
+                      <div className="relative p-8 flex flex-col h-full">
+                        {/* Category badges with enhanced styling */}
+                        <div className="flex items-center gap-2 mb-6">
+                          <span className="relative py-2 px-3 text-xs font-bold bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full shadow-md hover:shadow-lg transition-shadow">
+                            <span className="relative z-10">{blog.module.exam.title}</span>
+                            <div className="absolute inset-0 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
                           </span>
-                          <span className="py-1 px-2 text-xs font-semibold bg-purple-100 text-purple-700 rounded-md">
-                            {blog.module.title}
+                          <span className="relative py-2 px-3 text-xs font-bold bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-full shadow-md hover:shadow-lg transition-shadow">
+                            <span className="relative z-10">{blog.module.title}</span>
+                            <div className="absolute inset-0 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
                           </span>
                         </div>
                         
-                        <h2 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2 flex-grow">
+                        {/* Enhanced title with gradient text */}
+                        <h2 className="text-xl font-bold text-gray-900 mb-4 group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300 line-clamp-2 leading-tight flex-grow">
                           {blog.title}
                         </h2>
                         
+                        {/* Enhanced excerpt */}
                         {blog.excerpt && (
-                          <p className="text-gray-600 mb-6 line-clamp-3 flex-grow">
+                          <p className="text-gray-600 mb-6 line-clamp-3 leading-relaxed group-hover:text-gray-700 transition-colors flex-grow">
                             {blog.excerpt}
                           </p>
                         )}
                         
-                        <div className="flex items-center justify-between mt-auto">
-                          <div className="flex items-center text-sm text-gray-500">
-                            <Calendar className="h-4 w-4 mr-2" />
+                        {/* Enhanced footer with better spacing and styling */}
+                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100/50">
+                          <div className="flex items-center text-sm text-gray-500 group-hover:text-gray-600 transition-colors">
+                            <Calendar className="h-4 w-4 mr-2 text-blue-500" />
                             {new Date(blog.createdAt).toLocaleDateString("en-US", {
                               month: "short",
                               day: "numeric",
                               year: "numeric",
                             })}
                           </div>
-                          <div className="flex items-center text-blue-600 text-sm font-medium group-hover:text-blue-700 transition-colors">
-                            Read More
-                            <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                          <div className="flex items-center text-blue-600 text-sm font-semibold group-hover:text-purple-600 transition-all duration-300">
+                            <span className="mr-2">Read More</span>
+                            <div className="relative">
+                              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-0 group-hover:opacity-20 transition-opacity -z-10"></div>
+                            </div>
                           </div>
                         </div>
+                      </div>
+                      
+                      {/* Subtle shine effect on hover */}
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                       </div>
                     </article>
                   </Link>
