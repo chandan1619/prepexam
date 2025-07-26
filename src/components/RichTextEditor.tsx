@@ -27,7 +27,6 @@ import TableRow from "@tiptap/extension-table-row";
 import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import { Extension } from "@tiptap/core";
-import { Editor } from "@tiptap/core";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -49,10 +48,8 @@ import {
   AlignRight,
   Table as TableIcon,
   Highlighter,
-  X,
   Eye,
   EyeOff,
-  Paintbrush,
 } from "lucide-react";
 import { ColorPicker } from "./ui/color-picker";
 import { TableToolbar } from "./ui/table-toolbar";

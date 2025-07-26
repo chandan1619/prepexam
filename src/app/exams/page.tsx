@@ -5,10 +5,18 @@ import PageLayout from "@/components/layout/PageLayout";
 import { useEffect, useState } from "react";
 
 export default function ExamsPage() {
-  const [courses, setCourses] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [courses, setCourses] = useState<Array<{
+    id: string;
+    title: string;
+    description: string;
+    slug?: string;
+    imageUrl?: string;
+    category?: string;
+    priceInINR: number;
+    duration?: string;
+    modules: Array<{ id: string }>;
+  }>>([]);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchCourses() {
@@ -94,11 +102,9 @@ export default function ExamsPage() {
                 >
                   {course.imageUrl && (
                     <div className="relative h-48">
-                      <img
-                        src={course.imageUrl}
-                        alt={course.title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
+                      <div className="w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
+                        {course.title}
+                      </div>
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                       {course.category && (
                         <div className="absolute top-4 left-4">

@@ -38,7 +38,7 @@ export default function BlogPostPage() {
         } else {
           setError("Blog post not found");
         }
-      } catch (error) {
+      } catch {
         setError("Failed to load blog post");
       } finally {
         setLoading(false);
@@ -83,7 +83,7 @@ export default function BlogPostPage() {
               {error || "Blog post not found"}
             </h2>
             <p className="text-gray-600 mb-8">
-              The blog post you're looking for doesn't exist or has been removed.
+              The blog post you&apos;re looking for doesn&apos;t exist or has been removed.
             </p>
             <Link href="/">
               <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200">
@@ -104,7 +104,7 @@ export default function BlogPostPage() {
           text: blog.excerpt || blog.title,
           url: window.location.href,
         });
-      } catch (error) {
+      } catch {
         // Fallback to copying URL
         navigator.clipboard.writeText(window.location.href);
       }

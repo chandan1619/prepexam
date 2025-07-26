@@ -1,6 +1,6 @@
 "use client";
 import { useParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -32,10 +32,37 @@ interface Module {
   id: string;
   title: string;
   description?: string;
-  blogPosts: any[];
-  pyqs: any[];
-  quizzes: any[];
-  moduleQuestions: any[];
+  blogPosts: Array<{
+    id: string;
+    title: string;
+    content?: string;
+  }>;
+  pyqs: Array<{
+    id: string;
+    question: string;
+    solution?: string;
+    year?: number;
+  }>;
+  quizzes: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    questions?: Array<{
+      id: string;
+      question: string;
+      options?: string[];
+      correct?: number;
+    }>;
+    timeLimit?: number;
+    passingScore?: number;
+  }>;
+  moduleQuestions: Array<{
+    id: string;
+    question: string;
+    type?: string;
+    options?: string[];
+    correct?: number;
+  }>;
 }
 
 interface Course {
@@ -57,7 +84,11 @@ export default function CourseModulesPage() {
   const [success, setSuccess] = useState("");
 
   // Implement updateModule to persist new topics as blog posts
-  const updateModule = async (moduleId: string, updatedModule: any) => {
+  const updateModule = async (moduleId: string, updatedModule: {
+    topics?: Array<{ title: string; content: string }>;
+    quizzes?: Array<{ title?: string; question?: string; options?: string[]; correct?: number; questions?: Array<{ options?: string[]; correct?: number }> }>;
+    previousYearQuestions?: Array<{ question: string; solution?: string; year?: number }>;
+  }) => {
     if (!course) return;
     const currentModule = course.modules.find((m) => m.id === moduleId);
     // Add Topic (Blog Post)
@@ -128,11 +159,7 @@ export default function CourseModulesPage() {
     }
   };
 
-  useEffect(() => {
-    fetchCourse();
-  }, [id]);
-
-  const fetchCourse = async () => {
+  const fetchCourse = useCallback(async () => {
     try {
       console.log("Fetching course with ID:", id);
       const res = await fetch(`/api/admin/course/${id}`);
@@ -147,13 +174,17 @@ export default function CourseModulesPage() {
         console.error("Course fetch failed:", errorData);
         setError("Failed to load course");
       }
-    } catch (err) {
-      console.error("Course fetch error:", err);
+    } catch {
+      console.error("Course fetch error");
       setError("Failed to load course");
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchCourse();
+  }, [fetchCourse]);
 
   const addModule = async () => {
     if (!newModuleTitle.trim()) {
@@ -193,8 +224,8 @@ export default function CourseModulesPage() {
         console.error("Module creation failed:", data);
         setError(data.error || "Failed to add module");
       }
-    } catch (err) {
-      console.error("Module creation error:", err);
+    } catch {
+      console.error("Module creation error");
       setError("Failed to add module");
     }
   };
@@ -212,7 +243,7 @@ export default function CourseModulesPage() {
         const data = await res.json();
         setError(data.error || "Failed to delete module");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to delete module");
     }
   };
@@ -455,14 +486,42 @@ export default function CourseModulesPage() {
                         {/* Module Content Manager */}
                         <div className="mt-6">
                           <ModuleContentManager
-                            module={{
-                              ...module,
-                              description: module.description || "",
-                              topics: module.blogPosts || [],
-                              questions: module.moduleQuestions || [],
-                              previousYearQuestions: module.pyqs || [],
-                              moduleQuestions: module.moduleQuestions || [],
-                            }}
+                           module={{
+                             ...module,
+                             description: module.description || "",
+                             topics: (module.blogPosts || []).map(post => ({
+                               ...post,
+                               content: post.content || "",
+                               duration: "30 minutes"
+                             })),
+                             questions: (module.moduleQuestions || []).map(q => ({
+                               ...q,
+                               type: "multiple-choice" as const,
+                               correctAnswer: q.correct?.toString() || "0",
+                               explanation: ""
+                             })),
+                             quizzes: (module.quizzes || []).map(quiz => ({
+                               ...quiz,
+                               title: quiz.title || "Untitled Quiz",
+                               description: quiz.description || "",
+                               questions: (quiz.questions || []).map(q => ({
+                                 ...q,
+                                 type: "multiple-choice" as const,
+                                 correctAnswer: q.correct?.toString() || "0",
+                                 explanation: ""
+                               })),
+                               timeLimit: quiz.timeLimit || 30,
+                               passingScore: quiz.passingScore || 70
+                             })),
+                             previousYearQuestions: (module.pyqs || []).map(pyq => ({
+                               ...pyq,
+                               year: pyq.year || new Date().getFullYear(),
+                               solution: pyq.solution || "",
+                               difficulty: "medium" as const,
+                               marks: 1
+                             })),
+                             moduleQuestions: module.moduleQuestions || [],
+                           }}
                             onModuleUpdate={(updatedModule) => {
                               // If updateModule is not defined, use a no-op
                               if (typeof updateModule === "function") {

@@ -43,7 +43,7 @@ export default function EditCoursePage() {
         } else {
           setError(data.error || "Failed to fetch course");
         }
-      } catch (e) {
+      } catch {
         setError("Failed to fetch course");
       }
       setLoading(false);
@@ -78,7 +78,7 @@ export default function EditCoursePage() {
         const data = await res.json();
         setError(data.error || "Failed to update course");
       }
-    } catch (e) {
+    } catch {
       setError("Failed to update course");
     }
   };

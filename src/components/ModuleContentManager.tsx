@@ -17,7 +17,6 @@ import {
   CheckCircle,
 } from "lucide-react";
 import RichTextEditor from "./RichTextEditor";
-import { QuizQuestionForm } from "./QuizQuestionForm";
 
 interface Topic {
   id: string;
@@ -31,6 +30,7 @@ interface Question {
   question: string;
   type: "multiple-choice" | "true-false" | "essay" | "fill-blank";
   options?: string[];
+  correct?: number;
   correctAnswer: string;
   explanation: string;
 }
@@ -61,7 +61,13 @@ interface Module {
   questions: Question[];
   quizzes: Quiz[];
   previousYearQuestions: PreviousYearQuestion[];
-  moduleQuestions: any[]; // Added for standalone questions
+  moduleQuestions: Array<{
+    id: string;
+    question: string;
+    type?: string;
+    options?: string[];
+    correct?: number;
+  }>; // Added for standalone questions
 }
 
 interface ModuleContentManagerProps {
@@ -111,50 +117,10 @@ export function ModuleContentManager({
   };
 
   // Question Management
-  const addQuestion = (question: Question) => {
-    onModuleUpdate({
-      ...module,
-      questions: [...module.questions, question],
-    });
-    setIsAddingContent(null);
-  };
-
-  const deleteQuestion = (questionId: string) => {
-    onModuleUpdate({
-      ...module,
-      questions: module.questions?.filter((q) => q.id !== questionId),
-    });
-  };
 
   // Quiz Management
-  const [newQuiz, setNewQuiz] = useState({
-    title: "",
-    description: "",
-    timeLimit: 30,
-    passingScore: 70,
-  });
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
 
-  const addQuiz = () => {
-    if (!newQuiz.title.trim()) {
-      alert("Please enter a quiz title");
-      return;
-    }
-
-    const quiz: Quiz = {
-      id: Date.now().toString(),
-      ...newQuiz,
-      questions: [],
-    };
-
-    onModuleUpdate({
-      ...module,
-      quizzes: [...module.quizzes, quiz],
-    });
-
-    setNewQuiz({ title: "", description: "", timeLimit: 30, passingScore: 70 });
-    setIsAddingContent(null);
-  };
 
   const deleteQuiz = (quizId: string) => {
     onModuleUpdate({
@@ -163,30 +129,6 @@ export function ModuleContentManager({
     });
   };
 
-  const addQuestionToQuiz = (quizId: string, question: Question) => {
-    onModuleUpdate({
-      ...module,
-      quizzes: module.quizzes.map((quiz) =>
-        quiz.id === quizId
-          ? { ...quiz, questions: [...quiz.questions, question] }
-          : quiz
-      ),
-    });
-  };
-
-  const removeQuestionFromQuiz = (quizId: string, questionId: string) => {
-    onModuleUpdate({
-      ...module,
-      quizzes: module.quizzes.map((quiz) =>
-        quiz.id === quizId
-          ? {
-              ...quiz,
-              questions: quiz.questions.filter((q) => q.id !== questionId),
-            }
-          : quiz
-      ),
-    });
-  };
 
   // Previous Year Questions Management
   const [newPrevQuestion, setNewPrevQuestion] = useState({
@@ -268,7 +210,7 @@ export function ModuleContentManager({
         <div className="space-y-3">
           <h4 className="font-medium mt-6">Questions in this Quiz</h4>
           {selectedQuiz.questions && selectedQuiz.questions.length > 0 ? (
-            selectedQuiz.questions.map((question: any, index: number) => (
+            selectedQuiz.questions.map((question: Question, index: number) => (
               <Card key={question.id} className="shadow-md border-0">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
@@ -484,7 +426,7 @@ export function ModuleContentManager({
         )}
 
         <div className="space-y-3">
-          {module.moduleQuestions?.map((question: any) => (
+          {module.moduleQuestions?.map((question) => (
             <Card key={question.id} className="shadow-md border-0">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
@@ -494,13 +436,13 @@ export function ModuleContentManager({
                     </h4>
                     <div className="flex items-center gap-2 mt-2">
                       <Badge variant="secondary" className="text-xs">
-                        {question.type.replace("-", " ")}
+                        {question.type?.replace("-", " ") || "MCQ"}
                       </Badge>
                       <Badge variant="outline" className="text-xs">
                         <CheckCircle className="h-3 w-3 mr-1" />
                         {Array.isArray(question.options) &&
                         question.options.length > 0
-                          ? question.options[question.correct]
+                          ? question.options[question.correct || 0]
                           : question.correct === 1
                           ? "True"
                           : "False"}
@@ -795,7 +737,7 @@ function StandaloneQuestionForm({
         const data = await res.json();
         setError(data.error || "Failed to add question");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to add question");
     }
     setLoading(false);
@@ -924,7 +866,7 @@ function AddQuizForm({
         const data = await res.json();
         setError(data.error || "Failed to add quiz");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to add quiz");
     }
     setLoading(false);
@@ -988,8 +930,14 @@ function QuizQuestionSelector({
   quiz,
   onSuccess,
 }: {
-  moduleQuestions: any[];
-  quiz: any;
+  moduleQuestions: Array<{
+    id: string;
+    question: string;
+    type?: string;
+    options?: string[];
+    correct?: number;
+  }>;
+  quiz: Quiz;
   onSuccess: () => void;
 }) {
   const [selected, setSelected] = useState<string[]>([]);
@@ -1022,7 +970,7 @@ function QuizQuestionSelector({
         });
       }
       onSuccess();
-    } catch (err) {
+    } catch {
       setError("Failed to add questions");
     }
     setLoading(false);

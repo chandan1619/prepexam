@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   BookOpen,
   Plus,
-  Settings,
   Users,
   BarChart3,
   Save,
@@ -81,8 +80,8 @@ export default function AdminCreateCoursePage() {
         priceInINR: "",
         imageUrl: "",
       });
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
@@ -340,14 +339,9 @@ export default function AdminCreateCoursePage() {
                     <div className="mt-4">
                       <Label>Preview</Label>
                       <div className="mt-2">
-                        <img
-                          src={form.imageUrl}
-                          alt="Course preview"
-                          className="w-32 h-32 object-cover rounded-lg border"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                          }}
-                        />
+                        <div className="w-32 h-32 bg-gray-200 rounded-lg border flex items-center justify-center text-gray-500 text-sm">
+                          Preview Image
+                        </div>
                       </div>
                     </div>
                   )}

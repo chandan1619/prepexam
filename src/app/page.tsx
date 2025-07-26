@@ -3,7 +3,7 @@ import { useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
-import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import { SignInButton, SignedOut } from "@clerk/nextjs";
 
 import { Suspense } from "react";
 import { FeaturedBlogSection } from "@/components/FeaturedBlogSection";
@@ -11,7 +11,17 @@ import { FeaturedBlogSection } from "@/components/FeaturedBlogSection";
 export default function Home() {
   const { user } = useUser();
   const [role, setRole] = useState<"admin" | "user" | null>(null);
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<Array<{
+    id: string;
+    title: string;
+    description: string;
+    slug?: string;
+    imageUrl?: string;
+    category?: string;
+    level?: string;
+    priceInINR: number;
+    modules: Array<{ id: string }>;
+  }>>([]);
 
   useEffect(() => {
     const fetchRole = async () => {
@@ -209,11 +219,9 @@ export default function Home() {
                 >
                   {course.imageUrl && (
                     <div className="relative">
-                      <img
-                        src={course.imageUrl}
-                        alt={course.title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
+                      <div className="w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
+                        {course.title}
+                      </div>
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                     </div>
                   )}

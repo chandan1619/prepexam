@@ -6,6 +6,17 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+interface EmailAddress {
+  id: string;
+  email_address: string;
+}
+
+interface UserData {
+  id: string;
+  email_addresses?: EmailAddress[];
+  primary_email_address_id?: string;
+}
+
 async function validateRequest(request: Request) {
   const headerPayload = await headers();
   const svix_id = headerPayload.get("svix-id");
@@ -21,7 +32,6 @@ async function validateRequest(request: Request) {
 
   // Get the body
   const payload = await request.text();
-  const body = JSON.parse(payload);
 
   // Create a new Svix instance with your secret.
   const wh = new Webhook(process.env.CLERK_WEBHOOK_SECRET || "");
@@ -57,12 +67,12 @@ export async function POST(request: Request) {
     console.log(`Webhook received: ${eventType}`);
 
     if (eventType === "user.created" && evt.data.object === "user") {
-      const userData = evt.data as any;
+      const userData = evt.data as UserData;
       const { id, email_addresses, primary_email_address_id } = userData;
 
       // Get the primary email address
       const primaryEmail = email_addresses?.find(
-        (email: any) => email.id === primary_email_address_id
+        (email: EmailAddress) => email.id === primary_email_address_id
       );
 
       if (!primaryEmail) {
@@ -89,12 +99,12 @@ export async function POST(request: Request) {
     }
 
     if (eventType === "user.updated" && evt.data.object === "user") {
-      const userData = evt.data as any;
+      const userData = evt.data as UserData;
       const { id, email_addresses, primary_email_address_id } = userData;
 
       // Update user in your database if needed
       const primaryEmail = email_addresses?.find(
-        (email: any) => email.id === primary_email_address_id
+        (email: EmailAddress) => email.id === primary_email_address_id
       );
 
       if (primaryEmail) {
@@ -118,7 +128,7 @@ export async function POST(request: Request) {
     }
 
     if (eventType === "user.deleted" && evt.data.object === "user") {
-      const userData = evt.data as any;
+      const userData = evt.data as UserData;
       const { id } = userData;
 
       // Delete user from your database

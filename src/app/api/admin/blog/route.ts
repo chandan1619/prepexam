@@ -31,7 +31,7 @@ export async function GET() {
       },
     });
     return NextResponse.json({ blogs });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { error: "Not authorized or server error" },
       { status: 403 }
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
       },
     });
     return NextResponse.json({ blogPost });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { error: "Not authorized or server error" },
       { status: 403 }

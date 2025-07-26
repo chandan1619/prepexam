@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAdmin();
@@ -51,10 +51,10 @@ export async function PATCH(
 // Get a single blog post with its featured status
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     const post = await prisma.blogPost.findUnique({
       where: { id },

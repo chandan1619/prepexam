@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       },
     });
     return NextResponse.json({ pyq });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { error: "Not authorized or server error" },
       { status: 403 }

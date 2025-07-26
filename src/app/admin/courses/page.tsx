@@ -12,8 +12,14 @@ interface Course {
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
-  modules: any[];
-  purchases: any[];
+  modules: Array<{
+    id: string;
+    title: string;
+    blogPosts?: Array<{ id: string }>;
+    quizzes?: Array<{ id: string }>;
+    pyqs?: Array<{ id: string }>;
+  }>;
+  purchases: Array<{ id: string }>;
 }
 
 interface User {
@@ -142,7 +148,7 @@ export default function CoursesManagementPage() {
               Access Denied
             </h2>
             <p className="text-gray-600 mb-6">
-              You don't have admin privileges to access this page.
+              You don&apos;t have admin privileges to access this page.
             </p>
             <Link href="/dashboard">
               <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">

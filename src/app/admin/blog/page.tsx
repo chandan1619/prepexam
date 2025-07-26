@@ -92,7 +92,7 @@ export default function BlogManagementPage() {
             : "This blog post has been removed from featured posts",
         });
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to update blog post",
@@ -154,7 +154,7 @@ export default function BlogManagementPage() {
               Access Denied
             </h2>
             <p className="text-gray-600 mb-6">
-              You don't have admin privileges to access this page.
+              You don&apos;t have admin privileges to access this page.
             </p>
             <Link href="/dashboard">
               <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
@@ -187,7 +187,7 @@ export default function BlogManagementPage() {
                   {["all", "featured", "published", "drafts"].map((filterOption) => (
                     <button
                       key={filterOption}
-                      onClick={() => setFilter(filterOption as any)}
+                      onClick={() => setFilter(filterOption as "all" | "featured" | "published" | "drafts")}
                       className={`px-4 py-2 text-sm font-medium rounded-md capitalize transition-colors ${
                         filter === filterOption
                           ? "bg-white text-blue-600 shadow-sm"

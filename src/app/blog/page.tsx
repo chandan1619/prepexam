@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
-import { Calendar, BookOpen, ArrowRight } from "lucide-react";
+import { Calendar, ArrowRight } from "lucide-react";
 
 interface FeaturedBlog {
   id: string;
@@ -116,7 +116,7 @@ export default function BlogListPage() {
                 No articles available yet
               </h3>
               <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                We're working on creating amazing content for you. Check back soon for expert insights and study materials.
+                We&apos;re working on creating amazing content for you. Check back soon for expert insights and study materials.
               </p>
               <Link href="/">
                 <button className="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors">

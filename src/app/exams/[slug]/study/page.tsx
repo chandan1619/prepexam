@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import PageLayout from "@/components/layout/PageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,23 @@ import { Progress } from "@/components/ui/progress";
 
 export default function StudyPage() {
   const params = useParams();
-  const router = useRouter();
   const slug = params?.slug as string;
-  const [course, setCourse] = useState<any>(null);
+  const [course, setCourse] = useState<{
+    modules: Array<{
+      id: string;
+      title: string;
+      blogPosts?: Array<{ id: string; title: string; content: string }>;
+      moduleQuestions?: Array<{ id: string; question: string; options?: string[]; correct?: number; type?: string }>;
+      quizzes?: Array<{
+        id: string;
+        title: string;
+        questions: Array<{ id: string; question: string; options?: string[]; correct?: number }>;
+        passingMark?: number;
+        timeLimit?: number;
+      }>;
+      pyqs?: Array<{ id: string; question: string; solution?: string; year?: number }>;
+    }>;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentModuleIdx, setCurrentModuleIdx] = useState(0);
@@ -20,8 +34,6 @@ export default function StudyPage() {
   const [selectedOption, setSelectedOption] = useState<number | string | null>(
     null
   );
-  const [showQuizFeedback, setShowQuizFeedback] = useState(false);
-  const [quizFeedback, setQuizFeedback] = useState<string>("");
   const [quizQuestionIdx, setQuizQuestionIdx] = useState(0);
 
   useEffect(() => {
@@ -36,7 +48,7 @@ export default function StudyPage() {
         } else {
           setError(data.error || "Course not found");
         }
-      } catch (err) {
+      } catch {
         setError("Failed to load course");
       }
       setLoading(false);
@@ -47,25 +59,58 @@ export default function StudyPage() {
   console.log(course);
 
   // Helper: Get all lessons in a module (blogPosts, moduleQuestions, quizzes, pyqs)
-  function getLessons(module: any) {
+  type LessonType =
+    | { type: "blogPost"; id: string; title: string; content: string }
+    | { type: "question"; id: string; question: string; options?: string[]; correct?: number }
+    | { type: "quiz"; id: string; title: string; questions: Array<{ id: string; question: string; options?: string[]; correct?: number }>; passingMark?: number; timeLimit?: number }
+    | { type: "pyq"; id: string; question: string; solution?: string; year?: number };
+
+  function getLessons(module: {
+    blogPosts?: Array<{ id: string; title: string; content: string }>;
+    moduleQuestions?: Array<{ id: string; question: string; options?: string[]; correct?: number; type?: string }>;
+    quizzes?: Array<{
+      id: string;
+      title: string;
+      questions: Array<{ id: string; question: string; options?: string[]; correct?: number }>;
+      passingMark?: number;
+      timeLimit?: number;
+    }>;
+    pyqs?: Array<{ id: string; question: string; solution?: string; year?: number }>;
+  }): LessonType[] {
     return [
-      ...(module.blogPosts || []).map((item: any) => ({
+      ...(module.blogPosts || []).map((item): LessonType => ({
         type: "blogPost",
         ...item,
       })),
-      ...(module.moduleQuestions || []).map((item: any) => ({
+      ...(module.moduleQuestions || []).map((item): LessonType => ({
         type: "question",
-        ...item,
+        id: item.id,
+        question: item.question,
+        options: item.options,
+        correct: item.correct,
       })),
-      ...(module.quizzes || []).map((item: any) => ({ type: "quiz", ...item })),
-      ...(module.pyqs || []).map((item: any) => ({ type: "pyq", ...item })),
+      ...(module.quizzes || []).map((item): LessonType => ({
+        type: "quiz",
+        id: item.id,
+        title: item.title,
+        questions: item.questions,
+        passingMark: item.passingMark,
+        timeLimit: item.timeLimit,
+      })),
+      ...(module.pyqs || []).map((item): LessonType => ({
+        type: "pyq",
+        id: item.id,
+        question: item.question,
+        solution: item.solution,
+        year: item.year,
+      })),
     ];
   }
 
   // Progress calculation
   const totalLessons = course
     ? course.modules.reduce(
-        (sum: number, m: any) => sum + getLessons(m).length,
+        (sum, m) => sum + getLessons(m).length,
         0
       )
     : 0;
@@ -146,7 +191,7 @@ export default function StudyPage() {
             <Progress value={progress} className="h-2 bg-gray-100" />
           </div>
           <ul className="space-y-6 mt-6">
-            {modules.map((mod: any, mIdx: number) => (
+            {modules.map((mod, mIdx: number) => (
               <li key={mod.id} className="relative">
                 {mIdx > 0 && <div className="absolute -top-3 left-3 w-0.5 h-3 bg-gray-200"></div>}
                 <div className="relative">
@@ -165,7 +210,7 @@ export default function StudyPage() {
                     {mod.title}
                   </div>
                   <ul className="ml-6 space-y-2">
-                    {getLessons(mod).map((les: any, lIdx: number) => (
+                    {getLessons(mod).map((les, lIdx: number) => (
                       <li key={les.id}>
                         <button
                           className={`text-left w-full px-3 py-2 rounded-lg transition-all duration-200 ${
@@ -186,7 +231,10 @@ export default function StudyPage() {
                             {les.type === "pyq" && "📅"}
                           </span>
                           <span className="line-clamp-1">
-                            {les.title || les.question || les.year || "Lesson"}
+                            {les.type === "blogPost" ? les.title :
+                             les.type === "question" ? les.question :
+                             les.type === "quiz" ? les.title :
+                             les.type === "pyq" ? `${les.year} Question` : "Lesson"}
                           </span>
                         </button>
                       </li>
@@ -242,7 +290,7 @@ export default function StudyPage() {
                     dangerouslySetInnerHTML={{ __html: currentLesson.content }}
                   />
                 )}
-                {["question", "mcq"].includes(currentLesson.type) && (
+                {currentLesson.type === "question" && (
                   <div className="space-y-6">
                     <div className="p-6 bg-blue-50 rounded-xl">
                       <div className="text-lg text-gray-900 leading-relaxed">
@@ -270,7 +318,7 @@ export default function StudyPage() {
                                 <span className={`flex items-center justify-center w-8 h-8 rounded-lg text-sm font-semibold ${
                                   typeof selectedOption === "number" &&
                                   selectedOption === idx
-                                    ? idx === currentLesson.correct
+                                    ? idx === (currentLesson.correct || 0)
                                       ? "bg-green-500 text-white"
                                       : "bg-red-500 text-white"
                                     : "bg-gray-100 text-gray-600"
@@ -291,11 +339,11 @@ export default function StudyPage() {
                     {typeof selectedOption === "number" &&
                       selectedOption !== null && (
                         <div className={`mt-6 p-4 rounded-xl ${
-                          selectedOption === currentLesson.correct
+                          selectedOption === (currentLesson.correct || 0)
                             ? "bg-green-50 border-2 border-green-500"
                             : "bg-red-50 border-2 border-red-500"
                         }`}>
-                          {selectedOption === currentLesson.correct ? (
+                          {selectedOption === (currentLesson.correct || 0) ? (
                             <div className="flex items-center gap-2 text-green-700">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -311,22 +359,12 @@ export default function StudyPage() {
                                 <span className="font-semibold">Not quite right. Keep trying!</span>
                               </div>
                               <div className="text-sm">
-                                The correct answer is: {String.fromCharCode(65 + currentLesson.correct)}
+                                The correct answer is: {String.fromCharCode(65 + (currentLesson.correct || 0))}
                               </div>
                             </div>
                           )}
                         </div>
                       )}
-                    {currentLesson.type === "true-false" && (
-                      <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                        <div className="font-medium text-blue-800">
-                          Correct Answer:{" "}
-                          <span className="font-bold">
-                            {currentLesson.correct === 1 ? "True" : "False"}
-                          </span>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
                 {currentLesson.type === "quiz" && (
@@ -434,7 +472,7 @@ export default function StudyPage() {
                                           <span className="font-semibold">Not quite right</span>
                                         </div>
                                         <div className="text-sm">
-                                          The correct answer is: {String.fromCharCode(65 + q.correct)}
+                                          The correct answer is: {String.fromCharCode(65 + (q.correct || 0))}
                                         </div>
                                       </div>
                                     )}
@@ -531,7 +569,7 @@ export default function StudyPage() {
                           <div className="prose prose-purple max-w-none">
                             <div
                               className="text-gray-800 leading-relaxed"
-                              dangerouslySetInnerHTML={{ __html: currentLesson.solution }}
+                              dangerouslySetInnerHTML={{ __html: currentLesson.solution || "" }}
                             />
                           </div>
                         </div>

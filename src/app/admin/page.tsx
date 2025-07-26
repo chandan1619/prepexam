@@ -175,7 +175,7 @@ export default function AdminDashboardPage() {
               Access Denied
             </h2>
             <p className="text-gray-600 mb-6">
-              You don't have admin privileges to access this page.
+              You don&apos;t have admin privileges to access this page.
             </p>
             <Link href="/dashboard">
               <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
@@ -335,7 +335,7 @@ export default function AdminDashboardPage() {
                   <div className="text-2xl mr-3">📚</div>
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">
-                      New course "SSC CHSL" created
+                      New course &quot;SSC CHSL&quot; created
                     </p>
                     <p className="text-sm text-gray-500">2 days ago</p>
                   </div>

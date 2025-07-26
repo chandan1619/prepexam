@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       include: { questions: true },
     });
     return NextResponse.json({ quiz });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { error: "Not authorized or server error" },
       { status: 403 }

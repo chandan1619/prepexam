@@ -3,13 +3,6 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import PageLayout from "@/components/layout/PageLayout";
 import { Loader } from "@/components/ui/loader";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -24,11 +17,23 @@ import Link from "next/link";
 export default function ExamDetailPage() {
   const params = useParams();
   const slug = params?.slug as string;
-  const [course, setCourse] = useState<any>(null);
+  const [course, setCourse] = useState<{
+    id: string;
+    title: string;
+    slug: string;
+    description: string;
+    imageUrl?: string;
+    category?: string;
+    level?: string;
+    duration?: string;
+    priceInINR: number;
+    modules: Array<{
+      id: string;
+      title: string;
+    }>;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeModule, setActiveModule] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("blogPosts");
 
   useEffect(() => {
     async function fetchCourse() {
@@ -42,7 +47,7 @@ export default function ExamDetailPage() {
         } else {
           setError(data.error || "Course not found");
         }
-      } catch (err) {
+      } catch {
         setError("Failed to load course");
       }
       setLoading(false);
@@ -87,12 +92,9 @@ export default function ExamDetailPage() {
               {course.imageUrl ? (
                 <div className="relative h-64 md:h-96">
                   <div className="absolute inset-0">
-                    <img
-                      src={course.imageUrl}
-                      alt={course.title}
-                      className="w-full h-full object-cover object-center"
-                      style={{ objectPosition: "center top" }}
-                    />
+                    <div className="w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+                      {course.title}
+                    </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
                   </div>
                 </div>
@@ -276,7 +278,7 @@ export default function ExamDetailPage() {
                       <CardTitle>Study Resources</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      {course.modules.map((module: any) => (
+                      {course.modules.map((module) => (
                         <div
                           key={module.id}
                           className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"

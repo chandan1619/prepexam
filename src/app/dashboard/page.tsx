@@ -6,7 +6,16 @@ import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
   const { user } = useUser();
-  const [purchasedCourses, setPurchasedCourses] = useState<any[]>([]);
+  const [purchasedCourses, setPurchasedCourses] = useState<Array<{
+    id: string;
+    exam: {
+      id: string;
+      title: string;
+      slug?: string;
+      priceInINR: number;
+    };
+    createdAt: string;
+  }>>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
