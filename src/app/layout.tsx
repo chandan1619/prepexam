@@ -23,12 +23,29 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ClerkProvider>{children}</ClerkProvider>
+        {publishableKey ? (
+          <ClerkProvider publishableKey={publishableKey}>
+            {children}
+          </ClerkProvider>
+        ) : (
+          <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">
+                Configuration Required
+              </h1>
+              <p className="text-gray-600">
+                Please configure your Clerk publishable key to continue.
+              </p>
+            </div>
+          </div>
+        )}
       </body>
     </html>
   );
