@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import PageLayout from "@/components/layout/PageLayout";
 import { Loader } from "@/components/ui/loader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,17 +19,23 @@ import {
   HelpCircle,
   Calendar,
   FileText,
+  Lock,
+  CheckCircle,
 } from "lucide-react";
 import Link from "next/link";
+import PaymentButton from "@/components/PaymentButton";
 
 export default function ExamDetailPage() {
   const params = useParams();
   const slug = params?.slug as string;
+  const { user } = useUser();
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeModule, setActiveModule] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("blogPosts");
+  const [userAccess, setUserAccess] = useState<any>(null);
+  const [accessLoading, setAccessLoading] = useState(false);
 
   useEffect(() => {
     async function fetchCourse() {
@@ -49,6 +56,30 @@ export default function ExamDetailPage() {
     }
     if (slug) fetchCourse();
   }, [slug]);
+
+  useEffect(() => {
+    async function checkUserAccess() {
+      if (!user || !course) return;
+      
+      setAccessLoading(true);
+      try {
+        const res = await fetch(`/api/user/access?examId=${course.id}`);
+        const data = await res.json();
+        if (res.ok) {
+          setUserAccess(data);
+        }
+      } catch (err) {
+        console.error("Failed to check user access:", err);
+      }
+      setAccessLoading(false);
+    }
+    
+    checkUserAccess();
+  }, [user, course]);
+
+  const handleEnrollmentSuccess = () => {
+    setUserAccess({ ...userAccess, hasAccess: true, isEnrolled: true });
+  };
 
   if (loading) {
     return (
@@ -162,20 +193,40 @@ export default function ExamDetailPage() {
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-4 items-center">
-                    <Link
-                      href={`/exams/${course.slug || course.id}/study`}
-                      className="w-full sm:w-auto"
-                    >
-                      <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">
-                        <ClipboardList className="h-5 w-5" />
-                        Start Preparing Now
-                      </button>
-                    </Link>
+                    {user && userAccess?.hasAccess ? (
+                      <Link
+                        href={`/exams/${course.slug || course.id}/study`}
+                        className="w-full sm:w-auto"
+                      >
+                        <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer">
+                          <ClipboardList className="h-5 w-5" />
+                          Start Preparing Now
+                        </button>
+                      </Link>
+                    ) : (
+                      <div className="w-full sm:w-auto">
+                        {user ? (
+                          <PaymentButton
+                            examId={course.id}
+                            examTitle={course.title}
+                            amount={course.priceInINR}
+                            isEnrolled={userAccess?.isEnrolled || false}
+                            onEnrollmentSuccess={handleEnrollmentSuccess}
+                          />
+                        ) : (
+                          <Link href="/sign-in" className="w-full block">
+                            <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200">
+                              Sign In to Enroll
+                            </button>
+                          </Link>
+                        )}
+                      </div>
+                    )}
                     <div className="flex items-center gap-4 bg-gray-50 px-6 py-3 rounded-xl">
                       <div>
                         <p className="text-sm text-gray-500">Course Fee</p>
                         <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                          ₹{course.priceInINR}
+                          {course.priceInINR === 0 ? "Free" : `₹${course.priceInINR}`}
                         </p>
                       </div>
                     </div>
@@ -276,15 +327,33 @@ export default function ExamDetailPage() {
                       <CardTitle>Study Resources</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      {course.modules.map((module: any) => (
-                        <div
-                          key={module.id}
-                          className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                          <BookOpen className="h-5 w-5 text-blue-600" />
-                          <span className="text-gray-700">{module.title}</span>
-                        </div>
-                      ))}
+                      {course.modules.map((module: any, index: number) => {
+                        const isFree = module.isFree || index === 0; // First module is always free
+                        const hasAccess = userAccess?.hasAccess || isFree;
+                        
+                        return (
+                          <div
+                            key={module.id}
+                            className={`flex items-center gap-3 py-2 px-3 rounded-lg transition-colors ${
+                              hasAccess ? "hover:bg-gray-50" : "opacity-60"
+                            }`}
+                          >
+                            {hasAccess ? (
+                              <CheckCircle className="h-5 w-5 text-green-600" />
+                            ) : (
+                              <Lock className="h-5 w-5 text-gray-400" />
+                            )}
+                            <span className={`${hasAccess ? "text-gray-700" : "text-gray-500"}`}>
+                              {module.title}
+                            </span>
+                            {isFree && (
+                              <Badge variant="outline" className="ml-auto text-xs">
+                                Free
+                              </Badge>
+                            )}
+                          </div>
+                        );
+                      })}
                     </CardContent>
                   </Card>
                 </div>

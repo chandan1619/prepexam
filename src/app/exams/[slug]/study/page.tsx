@@ -1,15 +1,27 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import PageLayout from "@/components/layout/PageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Lock, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import LockedModuleContent from "@/components/LockedModuleContent";
+
+// Add global Razorpay type
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 export default function StudyPage() {
   const params = useParams();
   const router = useRouter();
   const slug = params?.slug as string;
+  const { user } = useUser();
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -23,6 +35,8 @@ export default function StudyPage() {
   const [showQuizFeedback, setShowQuizFeedback] = useState(false);
   const [quizFeedback, setQuizFeedback] = useState<string>("");
   const [quizQuestionIdx, setQuizQuestionIdx] = useState(0);
+  const [userAccess, setUserAccess] = useState<any>(null);
+  const [accessLoading, setAccessLoading] = useState(false);
 
   useEffect(() => {
     async function fetchCourse() {
@@ -43,6 +57,177 @@ export default function StudyPage() {
     }
     if (slug) fetchCourse();
   }, [slug]);
+
+  useEffect(() => {
+    async function checkUserAccess() {
+      if (!user || !course) return;
+      
+      setAccessLoading(true);
+      try {
+        const res = await fetch(`/api/user/access?examId=${course.id}`);
+        const data = await res.json();
+        if (res.ok) {
+          setUserAccess(data);
+        }
+      } catch (err) {
+        console.error("Failed to check user access:", err);
+      }
+      setAccessLoading(false);
+    }
+    
+    checkUserAccess();
+  }, [user, course]);
+
+  // Ensure user starts with an accessible module
+  useEffect(() => {
+    if (!course || !course.modules || !userAccess) return;
+    
+    const modules = course.modules;
+    const hasModuleAccess = (moduleIndex: number) => {
+      if (!course || !course.modules[moduleIndex]) return false;
+      
+      const module = course.modules[moduleIndex];
+      
+      // User must be enrolled to access any module
+      if (!userAccess?.isEnrolled) return false;
+      
+      // Free modules are accessible to enrolled users
+      if (module.isFree) return true;
+      
+      // For paid modules, user needs both enrollment AND payment
+      return userAccess?.hasPaid || false;
+    };
+
+    if (modules.length > 0 && !hasModuleAccess(currentModuleIdx)) {
+      // Find the first accessible module
+      const firstAccessibleModule = modules.findIndex((_: any, idx: number) => hasModuleAccess(idx));
+      if (firstAccessibleModule !== -1) {
+        setCurrentModuleIdx(firstAccessibleModule);
+        setCurrentLessonIdx(0);
+      }
+    }
+  }, [userAccess, course, currentModuleIdx]);
+
+  // Check if user has access to current module
+  const hasModuleAccess = (moduleIndex: number) => {
+    if (!course || !course.modules[moduleIndex]) return false;
+    
+    const module = course.modules[moduleIndex];
+    
+    // User must be enrolled to access any module
+    if (!userAccess?.isEnrolled) return false;
+    
+    // Free modules are accessible to enrolled users
+    if (module.isFree) return true;
+    
+    // For paid modules, user needs both enrollment AND payment
+    return userAccess?.hasPaid || false;
+  };
+
+  const handleUpgrade = async () => {
+    if (!user || !course) return;
+
+    setLoading(true);
+    try {
+      // Create payment order
+      const orderResponse = await fetch("/api/payment/create-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ examId: course.id }),
+      });
+
+      const orderData = await orderResponse.json();
+
+      if (!orderResponse.ok) {
+        throw new Error(orderData.error || "Failed to create order");
+      }
+
+      // Load Razorpay script if not already loaded
+      if (!window.Razorpay) {
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
+        document.body.appendChild(script);
+        
+        await new Promise((resolve) => {
+          script.onload = resolve;
+        });
+      }
+
+      // Configure Razorpay options
+      const options = {
+        key: orderData.key,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "PrepExam",
+        description: `Upgrade to Premium - ${course.title}`,
+        order_id: orderData.orderId,
+        prefill: {
+          email: user?.emailAddresses[0]?.emailAddress || "",
+          name: user?.fullName || "",
+        },
+        theme: {
+          color: "#3B82F6",
+        },
+        handler: async (response: any) => {
+          await verifyPayment(response);
+        },
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+          },
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (error: any) {
+      console.error("Payment error:", error);
+      setLoading(false);
+    }
+  };
+
+  const verifyPayment = async (paymentResponse: any) => {
+    try {
+      const response = await fetch("/api/payment/verify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          razorpay_order_id: paymentResponse.razorpay_order_id,
+          razorpay_payment_id: paymentResponse.razorpay_payment_id,
+          razorpay_signature: paymentResponse.razorpay_signature,
+          examId: course.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Refresh user access
+        const accessRes = await fetch(`/api/user/access?examId=${course.id}`);
+        const accessData = await accessRes.json();
+        if (accessRes.ok) {
+          setUserAccess(accessData);
+        }
+        
+        // Redirect to success page
+        window.location.href = `/payment/success?payment_id=${paymentResponse.razorpay_payment_id}&order_id=${paymentResponse.razorpay_order_id}`;
+      } else {
+        throw new Error(data.error || "Payment verification failed");
+      }
+    } catch (error: any) {
+      console.error("Payment verification error:", error);
+      // Redirect to failure page
+      window.location.href = `/payment/failed?error=payment_failed&order_id=${paymentResponse.razorpay_order_id}`;
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   console.log(course);
 
@@ -103,6 +288,54 @@ export default function StudyPage() {
     );
   }
 
+  // If user is not signed in, redirect to sign in
+  if (!user) {
+    return (
+      <PageLayout>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center max-w-md mx-auto p-8">
+            <AlertCircle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Sign In Required
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Please sign in to access the study materials for this course.
+            </p>
+            <Link href="/sign-in">
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md">
+                Sign In
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // If user is not enrolled in the course
+  if (userAccess !== null && !userAccess.isEnrolled) {
+    return (
+      <PageLayout>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center max-w-md mx-auto p-8">
+            <Lock className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Enrollment Required
+            </h2>
+            <p className="text-gray-600 mb-6">
+              You need to enroll in this course to access the study materials.
+            </p>
+            <Link href={`/exams/${slug}`}>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md">
+                View Course & Enroll
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
   const modules = course.modules;
   const currentModule = modules[currentModuleIdx];
   const lessons = getLessons(currentModule);
@@ -110,6 +343,12 @@ export default function StudyPage() {
 
   // Navigation handlers
   const goToLesson = (modIdx: number, lesIdx: number) => {
+    // Check if user has access to this module
+    if (!hasModuleAccess(modIdx)) {
+      // Redirect to payment page for locked modules
+      router.push(`/payment/checkout?examId=${course.id}&courseSlug=${slug}`);
+      return;
+    }
     setCurrentModuleIdx(modIdx);
     setCurrentLessonIdx(lesIdx);
   };
@@ -117,17 +356,30 @@ export default function StudyPage() {
     if (currentLessonIdx < lessons.length - 1) {
       setCurrentLessonIdx(currentLessonIdx + 1);
     } else if (currentModuleIdx < modules.length - 1) {
-      setCurrentModuleIdx(currentModuleIdx + 1);
-      setCurrentLessonIdx(0);
+      // Check if next module is accessible
+      const nextModuleIdx = currentModuleIdx + 1;
+      if (hasModuleAccess(nextModuleIdx)) {
+        setCurrentModuleIdx(nextModuleIdx);
+        setCurrentLessonIdx(0);
+      } else {
+        // Redirect to payment page for locked next module
+        router.push(`/payment/checkout?examId=${course.id}&courseSlug=${slug}`);
+      }
     }
   };
+  
   const goPrev = () => {
     if (currentLessonIdx > 0) {
       setCurrentLessonIdx(currentLessonIdx - 1);
     } else if (currentModuleIdx > 0) {
-      const prevLessons = getLessons(modules[currentModuleIdx - 1]);
-      setCurrentModuleIdx(currentModuleIdx - 1);
-      setCurrentLessonIdx(prevLessons.length - 1);
+      // Check if previous module is accessible
+      const prevModuleIdx = currentModuleIdx - 1;
+      if (hasModuleAccess(prevModuleIdx)) {
+        const prevLessons = getLessons(modules[prevModuleIdx]);
+        setCurrentModuleIdx(prevModuleIdx);
+        setCurrentLessonIdx(prevLessons.length - 1);
+      }
+      // If previous module is locked, don't navigate (shouldn't happen in normal flow)
     }
   };
 
@@ -146,55 +398,75 @@ export default function StudyPage() {
             <Progress value={progress} className="h-2 bg-gray-100" />
           </div>
           <ul className="space-y-6 mt-6">
-            {modules.map((mod: any, mIdx: number) => (
-              <li key={mod.id} className="relative">
-                {mIdx > 0 && <div className="absolute -top-3 left-3 w-0.5 h-3 bg-gray-200"></div>}
-                <div className="relative">
-                  <div
-                    className={`font-semibold mb-3 pl-6 ${
-                      mIdx === currentModuleIdx
-                        ? "text-blue-600"
-                        : "text-gray-800"
-                    }`}
-                  >
-                    <div className={`absolute left-0 top-1.5 w-3 h-3 rounded-full ${
-                      mIdx < currentModuleIdx ? 'bg-green-500' :
-                      mIdx === currentModuleIdx ? 'bg-blue-500 ring-4 ring-blue-100' :
-                      'bg-gray-300'
-                    }`}></div>
-                    {mod.title}
+            {modules.map((mod: any, mIdx: number) => {
+              const moduleHasAccess = hasModuleAccess(mIdx);
+              const isLocked = !moduleHasAccess;
+              
+              return (
+                <li key={mod.id} className="relative">
+                  {mIdx > 0 && <div className="absolute -top-3 left-3 w-0.5 h-3 bg-gray-200"></div>}
+                  <div className="relative">
+                    <div
+                      className={`font-semibold mb-3 pl-6 flex items-center gap-2 ${
+                        mIdx === currentModuleIdx
+                          ? "text-blue-600"
+                          : isLocked
+                          ? "text-gray-400"
+                          : "text-gray-800"
+                      }`}
+                    >
+                      <div className={`absolute left-0 top-1.5 w-3 h-3 rounded-full ${
+                        isLocked ? 'bg-gray-300' :
+                        mIdx < currentModuleIdx ? 'bg-green-500' :
+                        mIdx === currentModuleIdx ? 'bg-blue-500 ring-4 ring-blue-100' :
+                        'bg-gray-300'
+                      }`}></div>
+                      <span className="flex-1">{mod.title}</span>
+                      {isLocked && <Lock className="h-4 w-4 text-gray-400" />}
+                      {mod.isFree && (
+                        <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">
+                          Free
+                        </span>
+                      )}
+                    </div>
+                    <ul className="ml-6 space-y-2">
+                      {getLessons(mod).map((les: any, lIdx: number) => (
+                        <li key={les.id}>
+                          <button
+                            className={`text-left w-full px-3 py-2 rounded-lg transition-all duration-200 ${
+                              isLocked
+                                ? "cursor-not-allowed opacity-50"
+                                : mIdx === currentModuleIdx && lIdx === currentLessonIdx
+                                ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
+                                : "hover:bg-blue-50 text-gray-700 hover:text-blue-700"
+                            } flex items-center gap-2`}
+                            onClick={() => goToLesson(mIdx, lIdx)}
+                            disabled={isLocked}
+                          >
+                            <span className={`${
+                              isLocked
+                                ? "text-gray-400"
+                                : mIdx === currentModuleIdx && lIdx === currentLessonIdx
+                                ? "text-white"
+                                : "text-blue-500"
+                            }`}>
+                              {isLocked ? "🔒" :
+                               les.type === "blogPost" ? "📖" :
+                               les.type === "question" ? "❓" :
+                               les.type === "quiz" ? "📝" :
+                               les.type === "pyq" ? "📅" : "📄"}
+                            </span>
+                            <span className="line-clamp-1">
+                              {les.title || les.question || les.year || "Lesson"}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <ul className="ml-6 space-y-2">
-                    {getLessons(mod).map((les: any, lIdx: number) => (
-                      <li key={les.id}>
-                        <button
-                          className={`text-left w-full px-3 py-2 rounded-lg transition-all duration-200 ${
-                            mIdx === currentModuleIdx && lIdx === currentLessonIdx
-                              ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
-                              : "hover:bg-blue-50 text-gray-700 hover:text-blue-700"
-                          } flex items-center gap-2`}
-                          onClick={() => goToLesson(mIdx, lIdx)}
-                        >
-                          <span className={`${
-                            mIdx === currentModuleIdx && lIdx === currentLessonIdx
-                              ? "text-white"
-                              : "text-blue-500"
-                          }`}>
-                            {les.type === "blogPost" && "📖"}
-                            {les.type === "question" && "❓"}
-                            {les.type === "quiz" && "📝"}
-                            {les.type === "pyq" && "📅"}
-                          </span>
-                          <span className="line-clamp-1">
-                            {les.title || les.question || les.year || "Lesson"}
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         </aside>
 
@@ -219,22 +491,44 @@ export default function StudyPage() {
                 </div>
               </div>
             </div>
-            <Card className="shadow-xl border-0 mb-8 overflow-hidden bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
-                <CardTitle className="flex items-center gap-3 text-xl">
-                  <span className="text-2xl">
-                    {currentLesson.type === "blogPost" && "📖"}
-                    {["question", "mcq"].includes(currentLesson.type) && "❓"}
-                    {currentLesson.type === "quiz" && "📝"}
-                    {currentLesson.type === "pyq" && "📅"}
-                  </span>
-                  {currentLesson.type === "blogPost" && currentLesson.title}
-                  {["question", "mcq"].includes(currentLesson.type) && "Practice Question"}
-                  {currentLesson.type === "quiz" && `Quiz Assessment`}
-                  {currentLesson.type === "pyq" && `Previous Year Question (${currentLesson.year})`}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 md:p-6">
+            {/* Check if current module is locked */}
+            {!hasModuleAccess(currentModuleIdx) ? (
+              <Card className="shadow-xl border-0 mb-8 overflow-hidden bg-white/90 backdrop-blur-sm">
+                <CardHeader className="bg-gradient-to-r from-red-50 to-orange-50 border-b text-center">
+                  <CardTitle className="text-xl text-gray-900 flex items-center justify-center gap-2">
+                    <Lock className="h-6 w-6 text-red-500" />
+                    Premium Content
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 text-center">
+                  <p className="text-gray-600 mb-6">
+                    This module requires a premium subscription. You'll be redirected to the payment page.
+                  </p>
+                  <Button
+                    onClick={() => router.push(`/payment/checkout?examId=${course.id}&courseSlug=${slug}`)}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200"
+                  >
+                    Upgrade to Premium
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-xl border-0 mb-8 overflow-hidden bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
+                  <CardTitle className="flex items-center gap-3 text-xl">
+                    <span className="text-2xl">
+                      {currentLesson.type === "blogPost" && "📖"}
+                      {["question", "mcq"].includes(currentLesson.type) && "❓"}
+                      {currentLesson.type === "quiz" && "📝"}
+                      {currentLesson.type === "pyq" && "📅"}
+                    </span>
+                    {currentLesson.type === "blogPost" && currentLesson.title}
+                    {["question", "mcq"].includes(currentLesson.type) && "Practice Question"}
+                    {currentLesson.type === "quiz" && `Quiz Assessment`}
+                    {currentLesson.type === "pyq" && `Previous Year Question (${currentLesson.year})`}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 md:p-6">
                 {/* Render lesson content by type */}
                 {currentLesson.type === "blogPost" && (
                   <div
@@ -539,8 +833,9 @@ export default function StudyPage() {
                     )}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
             <div className="flex justify-between w-full mt-8">
               <Button
                 onClick={goPrev}
