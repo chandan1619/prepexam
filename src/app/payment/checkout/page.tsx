@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import PageLayout from "@/components/layout/PageLayout";
@@ -16,7 +16,7 @@ declare global {
   }
 }
 
-export default function CheckoutPage() {
+function CheckoutPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useUser();
@@ -83,7 +83,7 @@ export default function CheckoutPage() {
         key: orderData.key,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: "PrepExam",
+        name: "Edmission",
         description: `Upgrade to Premium - ${course.title}`,
         order_id: orderData.orderId,
         prefill: {
@@ -314,5 +314,22 @@ export default function CheckoutPage() {
         </div>
       </div>
     </PageLayout>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <PageLayout>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading checkout...</p>
+          </div>
+        </div>
+      </PageLayout>
+    }>
+      <CheckoutPageContent />
+    </Suspense>
   );
 }

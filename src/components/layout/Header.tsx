@@ -11,10 +11,16 @@ export default function Header() {
     const checkAdminRole = async () => {
       if (user) {
         try {
-          const response = await fetch("/api/user/current");
+          const response = await fetch("/api/user/current", {
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache',
+            },
+          });
           if (response.ok) {
             const userData = await response.json();
             setIsAdmin(userData.role === "admin");
+            console.log('Header: User role check -', userData.role, 'Is Admin:', userData.role === "admin");
           }
         } catch (error) {
           console.error("Error checking admin role:", error);
@@ -23,6 +29,34 @@ export default function Header() {
     };
 
     checkAdminRole();
+  }, [user]);
+
+  // Add a manual refresh function for debugging
+  const refreshAdminStatus = async () => {
+    if (user) {
+      try {
+        const response = await fetch("/api/user/current", {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        });
+        if (response.ok) {
+          const userData = await response.json();
+          setIsAdmin(userData.role === "admin");
+          console.log('Manual refresh - User role:', userData.role, 'Is Admin:', userData.role === "admin");
+        }
+      } catch (error) {
+        console.error("Error refreshing admin role:", error);
+      }
+    }
+  };
+
+  // Expose refresh function to window for debugging (remove in production)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).refreshAdminStatus = refreshAdminStatus;
+    }
   }, [user]);
   return (
     <header className="bg-white border-b">
@@ -42,7 +76,7 @@ export default function Header() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  PrepExam
+                  Edmission
                 </h1>
                 <p className="text-xs text-gray-500 -mt-1">
                   Master Your Future

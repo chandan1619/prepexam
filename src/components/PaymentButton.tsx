@@ -132,7 +132,7 @@ export default function PaymentButton({
         key: orderData.key,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: "PrepExam",
+        name: "Edmission",
         description: `Enrollment for ${examTitle}`,
         order_id: orderData.orderId,
         prefill: {

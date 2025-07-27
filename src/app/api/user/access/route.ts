@@ -52,17 +52,17 @@ export async function GET(request: NextRequest) {
 
     // If checking specific module access
     if (moduleId) {
-      const module = await prisma.module.findUnique({
+      const moduleData = await prisma.module.findUnique({
         where: { id: moduleId },
         include: { exam: true }
       });
 
-      if (!module) {
+      if (!moduleData) {
         return NextResponse.json({ error: "Module not found" }, { status: 404 });
       }
 
       // Free modules are accessible to enrolled users
-      if (module.isFree) {
+      if (moduleData.isFree) {
         return NextResponse.json({
           hasAccess: hasAccess, // Need to be enrolled to access even free modules
           hasPaid: hasPaid,

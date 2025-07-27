@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import PageLayout from "@/components/layout/PageLayout";
 import { XCircle, ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
-export default function PaymentFailedPage() {
+function PaymentFailedPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -113,11 +113,11 @@ export default function PaymentFailedPage() {
               <p className="text-sm text-gray-600 mb-2">
                 Need help? Contact our support team
               </p>
-              <a 
-                href="mailto:support@prepexam.com" 
+              <a
+                href="mailto:support@edmission.com"
                 className="text-blue-600 hover:text-blue-700 text-sm font-medium"
               >
-                support@prepexam.com
+                support@edmission.com
               </a>
             </div>
 
@@ -129,5 +129,22 @@ export default function PaymentFailedPage() {
         </div>
       </div>
     </PageLayout>
+  );
+}
+
+export default function PaymentFailedPage() {
+  return (
+    <Suspense fallback={
+      <PageLayout>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </PageLayout>
+    }>
+      <PaymentFailedPageContent />
+    </Suspense>
   );
 }

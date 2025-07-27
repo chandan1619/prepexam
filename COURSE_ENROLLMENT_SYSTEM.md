@@ -1,6 +1,6 @@
 # Course Enrollment and Payment System
+This document describes the course enrollment and payment system implemented in the Edmission application.
 
-This document describes the course enrollment and payment system implemented in the PrepExam application.
 
 ## Overview
 

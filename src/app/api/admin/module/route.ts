@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       );
     }
     const { title, description, examId } = parsed.data;
-    const module = await prisma.module.create({
+    const moduleData = await prisma.module.create({
       data: {
         title,
         description: description || null,
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
         quizzes: true,
       },
     });
-    return NextResponse.json({ module });
+    return NextResponse.json({ module: moduleData });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Server error" },

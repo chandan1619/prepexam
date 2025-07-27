@@ -86,13 +86,13 @@ export default function StudyPage() {
     const hasModuleAccess = (moduleIndex: number) => {
       if (!course || !course.modules[moduleIndex]) return false;
       
-      const module = course.modules[moduleIndex];
+      const moduleData = course.modules[moduleIndex];
       
       // User must be enrolled to access any module
       if (!userAccess?.isEnrolled) return false;
       
       // Free modules are accessible to enrolled users
-      if (module.isFree) return true;
+      if (moduleData.isFree) return true;
       
       // For paid modules, user needs both enrollment AND payment
       return userAccess?.hasPaid || false;
@@ -112,13 +112,13 @@ export default function StudyPage() {
   const hasModuleAccess = (moduleIndex: number) => {
     if (!course || !course.modules[moduleIndex]) return false;
     
-    const module = course.modules[moduleIndex];
+    const moduleData = course.modules[moduleIndex];
     
     // User must be enrolled to access any module
     if (!userAccess?.isEnrolled) return false;
     
     // Free modules are accessible to enrolled users
-    if (module.isFree) return true;
+    if (moduleData.isFree) return true;
     
     // For paid modules, user needs both enrollment AND payment
     return userAccess?.hasPaid || false;
@@ -161,7 +161,7 @@ export default function StudyPage() {
         key: orderData.key,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: "PrepExam",
+        name: "Edmission",
         description: `Upgrade to Premium - ${course.title}`,
         order_id: orderData.orderId,
         prefill: {
