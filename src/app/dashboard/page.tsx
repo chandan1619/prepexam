@@ -6,35 +6,33 @@ import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
   const { user } = useUser();
-  const [purchasedCourses, setPurchasedCourses] = useState<Array<{
-    id: string;
-    exam: {
-      id: string;
-      title: string;
-      slug?: string;
-      priceInINR: number;
-    };
-    createdAt: string;
-  }>>([]);
+  const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
+  const [purchaseHistory, setPurchaseHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchPurchases() {
+    async function fetchUserData() {
       setLoading(true);
       try {
-        const res = await fetch("/api/user/purchases");
-        const data = await res.json();
-        if (res.ok && data.purchases) {
-          setPurchasedCourses(data.purchases);
-        } else {
-          setPurchasedCourses([]);
+        // Fetch enrollments
+        const enrollmentRes = await fetch("/api/enrollment");
+        const enrollmentData = await enrollmentRes.json();
+        if (enrollmentRes.ok) {
+          setEnrolledCourses(enrollmentData);
         }
-      } catch {
-        setPurchasedCourses([]);
+
+        // Fetch purchase history
+        const purchaseRes = await fetch("/api/user/purchases");
+        const purchaseData = await purchaseRes.json();
+        if (purchaseRes.ok && purchaseData.purchases) {
+          setPurchaseHistory(purchaseData.purchases);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
       }
       setLoading(false);
     }
-    if (user) fetchPurchases();
+    if (user) fetchUserData();
   }, [user]);
 
   const recentActivity = [
@@ -104,7 +102,7 @@ export default function DashboardPage() {
                 <div>
                   <p className="text-sm text-gray-600">Courses Enrolled</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {purchasedCourses.length}
+                    {enrolledCourses.length}
                   </p>
                 </div>
               </div>
@@ -138,7 +136,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-8">
+          <div className="grid lg:grid-cols-2 gap-8 mb-8">
             {/* My Courses */}
             <div className="bg-white rounded-lg shadow">
               <div className="p-6 border-b">
@@ -151,7 +149,7 @@ export default function DashboardPage() {
                   <div className="text-center py-8 text-gray-500">
                     Loading...
                   </div>
-                ) : purchasedCourses.length === 0 ? (
+                ) : enrolledCourses.length === 0 ? (
                   <div className="text-center py-8">
                     <div className="text-4xl mb-4">📚</div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -168,37 +166,36 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {purchasedCourses.map((purchase) => (
-                      <div key={purchase.id} className="border rounded-lg p-4">
+                    {enrolledCourses.map((enrollment) => (
+                      <div key={enrollment.id} className="border rounded-lg p-4">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center">
                             <div className="text-2xl mr-3">📚</div>
                             <div>
                               <h3 className="font-semibold text-gray-900">
-                                {purchase.exam.title}
+                                {enrollment.exam.title}
                               </h3>
                               <p className="text-sm text-gray-500">
-                                Purchased on{" "}
+                                Enrolled on{" "}
                                 {new Date(
-                                  purchase.createdAt
+                                  enrollment.createdAt
                                 ).toLocaleDateString()}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {enrollment.exam.modules.length} modules available
                               </p>
                             </div>
                           </div>
                           <Link
                             href={`/exams/${
-                              purchase.exam.slug || purchase.exam.id
-                            }`}
+                              enrollment.exam.slug || enrollment.exam.id
+                            }/study`}
                           >
-                            <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                              Continue
+                            <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium">
+                              Continue Learning
                             </button>
                           </Link>
                         </div>
-                        {/* Optionally add progress bar if you have progress data */}
-                        <p className="text-sm text-gray-500">
-                          Price: ₹{purchase.exam.priceInINR}
-                        </p>
                       </div>
                     ))}
                   </div>
@@ -263,6 +260,89 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Payment History */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6 border-b">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Payment History
+              </h2>
+            </div>
+            <div className="p-6">
+              {loading ? (
+                <div className="text-center py-8 text-gray-500">
+                  Loading...
+                </div>
+              ) : purchaseHistory.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-4">💳</div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    No payments yet
+                  </h3>
+                  <p className="text-gray-600">
+                    Your payment history will appear here
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Course
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Amount
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Payment ID
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {purchaseHistory.map((purchase) => (
+                        <tr key={purchase.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {purchase.exam.title}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              ₹{purchase.amount}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              purchase.paymentStatus === 'SUCCESS'
+                                ? 'bg-green-100 text-green-800'
+                                : purchase.paymentStatus === 'PENDING'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {purchase.paymentStatus}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(purchase.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {purchase.paymentId || 'N/A'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         </div>

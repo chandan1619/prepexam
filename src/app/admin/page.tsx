@@ -20,10 +20,16 @@ export default function AdminDashboardPage() {
     const fetchCurrentUser = async () => {
       if (user) {
         try {
-          const response = await fetch("/api/user/current");
+          const response = await fetch("/api/user/current", {
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache',
+            },
+          });
           if (response.ok) {
             const userData = await response.json();
             setCurrentUser(userData);
+            console.log('Admin page: User data fetched -', userData);
           }
         } catch (error) {
           console.error("Error fetching user:", error);
@@ -33,6 +39,36 @@ export default function AdminDashboardPage() {
     };
 
     fetchCurrentUser();
+  }, [user]);
+
+  // Add manual refresh function for debugging
+  const refreshUserData = async () => {
+    setLoading(true);
+    if (user) {
+      try {
+        const response = await fetch("/api/user/current", {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        });
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUser(userData);
+          console.log('Admin page: Manual refresh -', userData);
+        }
+      } catch (error) {
+        console.error("Error refreshing user:", error);
+      }
+    }
+    setLoading(false);
+  };
+
+  // Expose refresh function to window for debugging (remove in production)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).refreshAdminUserData = refreshUserData;
+    }
   }, [user]);
 
   const stats = [

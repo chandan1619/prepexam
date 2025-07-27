@@ -52,15 +52,14 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="text-left space-y-8">
               <div>
-                <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-                  Your Gateway to{" "}
-                  <span className="text-yellow-400">Success</span> in Government
-                  Exams
+                <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight">
+                  A mission to make your{" "}
+                  <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+                    milestones
+                  </span>
                 </h1>
-                <p className="text-xl md:text-2xl mb-8 text-blue-100">
-                  Expert-curated study materials, real exam simulations, and
-                  personalized guidance to help you achieve your dreams of a
-                  government job.
+                <p className="text-xl md:text-2xl mb-8 text-blue-100 font-medium">
+                  Transform your preparation with AI-powered study plans, expert-curated content, and guidance from top-notch IIT faculty — all complemented by real exam simulations designed to guarantee your success.
                 </p>
               </div>
               <div className="flex flex-wrap gap-4">
@@ -158,8 +157,8 @@ export default function Home() {
                     <p className="text-blue-100">Success Rate</p>
                   </div>
                   <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl">
-                    <h3 className="text-2xl font-bold mb-2">1</h3>
-                    <p className="text-blue-100">Exam Category</p>
+                    <h3 className="text-2xl font-bold mb-2">50+</h3>
+                    <p className="text-blue-100">Exam Categories</p>
                   </div>
                   <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl">
                     <h3 className="text-2xl font-bold mb-2">24/7</h3>
@@ -182,11 +181,11 @@ export default function Home() {
               </span>
             </div>
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Prepare for Top Government Exams
+              Excel in Any Competitive Exam
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Expertly designed courses with comprehensive study materials, mock
-              tests, and personalized feedback to maximize your success rate
+              tests, and personalized feedback to maximize your success rate across all exam categories
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
@@ -314,7 +313,7 @@ export default function Home() {
               Your Success is Our Mission
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              We provide everything you need to excel in government examinations
+              We provide everything you need to excel in any competitive examination
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -480,7 +479,7 @@ export default function Home() {
             </h2>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
               Join thousands of successful candidates who have achieved their
-              dreams with PrepExam
+              dreams with Edmission
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/exams">
