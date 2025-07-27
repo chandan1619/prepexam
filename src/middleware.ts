@@ -58,7 +58,14 @@ export default clerkMiddleware(async (auth, req) => {
   
   return NextResponse.next();
 }, {
-  authorizedParties: ['https://www.edmissions.site'],
+  authorizedParties: process.env.NODE_ENV === 'production'
+    ? ['https://www.edmissions.site']
+    : [
+        'https://www.edmissions.site',
+        'http://localhost:3000',
+        'https://localhost:3000',
+        process.env.NEXT_PUBLIC_CLERK_DOMAIN || 'http://localhost:3000'
+      ],
 });
 
 export const config = {
