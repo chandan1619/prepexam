@@ -1,8 +1,10 @@
 {
   "buildCommand": "npm run vercel-build",
+  "installCommand": "npm ci && npx prisma generate",
   "build": {
     "env": {
-      "PRISMA_GENERATE_DATAPROXY": "true"
+      "PRISMA_GENERATE_DATAPROXY": "true",
+      "SKIP_ENV_VALIDATION": "true"
     }
   },
   "functions": {
