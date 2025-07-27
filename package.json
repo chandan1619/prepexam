@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
-    "prebuild": "prisma generate",
+    "build": "bash build.sh",
+    "build:next": "next build",
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
@@ -13,8 +13,7 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio",
-    "vercel-build": "prisma migrate deploy && prisma generate && next build"
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.35.3",
