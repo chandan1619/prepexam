@@ -4,13 +4,22 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
-    // Log request headers for debugging (only in production issues)
+    // Check for problematic headers and log them
     const authHeader = request.headers.get('authorization');
     if (authHeader && /[^\x00-\x7F]/.test(authHeader)) {
       console.warn('Non-ASCII characters detected in authorization header');
+      console.warn('Header value:', authHeader.replace(/[^\x00-\x7F]/g, '?'));
     }
 
-    const { userId } = await auth();
+    let userId: string | null = null;
+    
+    try {
+      const authResult = await auth();
+      userId = authResult.userId;
+    } catch (authError) {
+      console.error("Clerk auth error:", authError);
+      return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
+    }
 
     if (!userId) {
       console.log("Auth failed: No userId returned from Clerk auth()");
