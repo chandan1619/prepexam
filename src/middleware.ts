@@ -1,41 +1,66 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
-export default clerkMiddleware((auth, req: NextRequest) => {
-  // Handle header encoding issues in production
-  try {
-    // Get the authorization header
-    const authHeader = req.headers.get('authorization');
-    
-    // If there's an authorization header, ensure it's properly encoded
-    if (authHeader) {
-      // Check if the header contains non-ASCII characters
-      const hasNonAscii = /[^\x00-\x7F]/.test(authHeader);
-      
-      if (hasNonAscii) {
-        console.warn('Authorization header contains non-ASCII characters, cleaning...');
-        
-        console.warn('Authorization header contains non-ASCII characters, removing header');
-        
-        // Continue without the problematic header
-        return NextResponse.next();
-      }
-    }
-    
-    // Continue normally if no issues
-    return NextResponse.next();
-  } catch (error) {
-    console.error('Middleware header processing error:', error);
-    // Continue with original request if error occurs
-    return NextResponse.next();
+// Custom function to clean headers
+function cleanHeaders(request: NextRequest): NextRequest {
+  const headers = new Headers(request.headers);
+  
+  // Check and clean authorization header
+  const authHeader = headers.get('authorization');
+  if (authHeader && /[^\x00-\x7F]/.test(authHeader)) {
+    console.warn('Cleaning non-ASCII characters from authorization header');
+    // Remove non-ASCII characters from the header
+    const cleanedAuth = authHeader.replace(/[^\x00-\x7F]/g, '');
+    headers.set('authorization', cleanedAuth);
   }
+  
+  // Check and clean other common headers that might have issues
+  const cookieHeader = headers.get('cookie');
+  if (cookieHeader && /[^\x00-\x7F]/.test(cookieHeader)) {
+    console.warn('Cleaning non-ASCII characters from cookie header');
+    const cleanedCookie = cookieHeader.replace(/[^\x00-\x7F]/g, '');
+    headers.set('cookie', cleanedCookie);
+  }
+  
+  return new NextRequest(request.url, {
+    method: request.method,
+    headers: headers,
+    body: request.body,
+  });
+}
+
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/api/webhooks/clerk",
+  "/blog",
+  "/blog/(.*)",
+  "/exams",
+  "/exams/(.*)",
+  "/sign-in",
+  "/sign-up",
+  "/api/blog/featured",
+  "/api/blog/slug/(.*)",
+  "/api/courses",
+  "/api/course/(.*)",
+]);
+
+export default clerkMiddleware(async (auth, req) => {
+  // Clean headers first
+  const cleanedReq = cleanHeaders(req);
+  
+  // If it's not a public route, protect it
+  if (!isPublicRoute(cleanedReq)) {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.redirect(new URL('/sign-in', req.url));
+    }
+  }
+  
+  return NextResponse.next();
+}, {
+  authorizedParties: ['https://www.edmissions.site'],
 });
 
 export const config = {
-  matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
-    "/(api|trpc)(.*)",
-  ],
+  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
 };
