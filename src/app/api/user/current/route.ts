@@ -12,9 +12,11 @@ export async function GET(request: NextRequest) {
     }
 
     let userId: string | null = null;
+
+    let authResult = "authResult" as any; // Placeholder for auth result type
     
     try {
-      const authResult = await auth();
+      authResult = await auth();
       userId = authResult.userId;
     } catch (authError) {
       console.error("Clerk auth error:", authError);
@@ -22,7 +24,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (!userId) {
-      console.log("Auth failed: No userId returned from Clerk auth()");
+      console.log(
+        "Auth failed: No userId returned from Clerk auth()",
+        authResult
+      );
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
