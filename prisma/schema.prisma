@@ -18,6 +18,7 @@ model User {
   purchases   Purchase[]
   enrollments Enrollment[]
   progress    UserProgress[]
+  comments    Comment[]
 }
 
 model Exam {
@@ -61,16 +62,33 @@ model BlogPost {
   excerpt     String?  // Short description for the landing page
   isPublished Boolean  @default(false)
   isFeatured  Boolean  @default(false)
+  order       Int      @default(0)
   createdAt   DateTime @default(now())
   module      Module   @relation(fields: [moduleId], references: [id])
+  comments    Comment[]
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  content    String
+  userId     String
+  blogPostId String
+  user       User     @relation(fields: [userId], references: [id])
+  blogPost   BlogPost @relation(fields: [blogPostId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model PYQ {
   id          String   @id @default(cuid())
   moduleId    String
+  type        String   @default("descriptive") // 'mcq', 'boolean', 'descriptive'
   question    String
-  solution    String
+  options     String[] // for MCQ and boolean, empty for descriptive
+  correct     Int?     // index for MCQ, 0/1 for boolean, null for descriptive
+  solution    String   // detailed solution/explanation
   year        Int
+  order       Int      @default(0)
   module      Module   @relation(fields: [moduleId], references: [id])
 }
 
@@ -79,8 +97,10 @@ model Quiz {
   moduleId    String
   title       String
   description String?
+  type        QuizType       @default(ASSESSMENT)
   passingMark Int            @default(40) // or whatever default you want
   timeLimit   Int            @default(30) // or whatever default you want
+  order       Int            @default(0)
   questions   QuizQuestion[]
   module      Module         @relation(fields: [moduleId], references: [id])
 }
@@ -102,6 +122,7 @@ model ModuleQuestion {
   question  String
   options   String[] // for MCQ, empty for true/false
   correct   Int      // index for MCQ, 0/1 for true/false
+  order     Int      @default(0)
   module    Module   @relation(fields: [moduleId], references: [id])
 }
 
@@ -149,4 +170,9 @@ enum PaymentStatus {
   SUCCESS
   FAILED
   REFUNDED
+}
+
+enum QuizType {
+  PRACTICE
+  ASSESSMENT
 }

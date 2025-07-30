@@ -100,12 +100,27 @@ export default function ExamsPage() {
                   key={course.id}
                   className="group bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                 >
-                  {course.imageUrl && (
+                  {course.imageUrl ? (
+                    <div className="relative h-48">
+                      <img
+                        src={course.imageUrl}
+                        alt={course.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                      {course.category && (
+                        <div className="absolute top-4 left-4">
+                          <span className="px-3 py-1 bg-blue-500/90 text-white text-sm font-medium rounded-lg">
+                            {course.category}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
                     <div className="relative h-48">
                       <div className="w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
                         {course.title}
                       </div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                       {course.category && (
                         <div className="absolute top-4 left-4">
                           <span className="px-3 py-1 bg-blue-500/90 text-white text-sm font-medium rounded-lg">

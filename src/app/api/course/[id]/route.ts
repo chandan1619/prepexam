@@ -15,15 +15,23 @@ export async function GET(
       },
       include: {
         modules: {
+          orderBy: { order: 'asc' },
           include: {
-            blogPosts: true,
+            blogPosts: {
+              orderBy: { order: 'asc' },
+            },
             quizzes: {
+              orderBy: { order: 'asc' },
               include: {
                 questions: true,
               },
             },
-            pyqs: true,
-            moduleQuestions: true,
+            pyqs: {
+              orderBy: { order: 'asc' },
+            },
+            moduleQuestions: {
+              orderBy: { order: 'asc' },
+            },
           },
         },
       },

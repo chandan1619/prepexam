@@ -52,14 +52,21 @@ export default function ExamDetailPage() {
 
   useEffect(() => {
     async function checkUserAccess() {
-      if (!user || !course) return;
+      if (!user || !course) {
+        console.log("User or course not available:", { user: !!user, course: !!course });
+        return;
+      }
       
       setAccessLoading(true);
       try {
+        console.log("Checking user access for course:", course.id);
         const res = await fetch(`/api/user/access?examId=${course.id}`);
         const data = await res.json();
+        console.log("User access response:", data);
         if (res.ok) {
           setUserAccess(data);
+        } else {
+          console.error("Access check failed:", data);
         }
       } catch (err) {
         console.error("Failed to check user access:", err);
@@ -70,8 +77,19 @@ export default function ExamDetailPage() {
     checkUserAccess();
   }, [user, course]);
 
-  const handleEnrollmentSuccess = () => {
-    setUserAccess({ ...userAccess, hasAccess: true, isEnrolled: true });
+  const handleEnrollmentSuccess = async () => {
+    // Refresh user access after enrollment
+    if (course) {
+      try {
+        const res = await fetch(`/api/user/access?examId=${course.id}`);
+        const data = await res.json();
+        if (res.ok) {
+          setUserAccess(data);
+        }
+      } catch (err) {
+        console.error("Failed to refresh user access:", err);
+      }
+    }
   };
 
   if (loading) {
@@ -110,15 +128,19 @@ export default function ExamDetailPage() {
             <div className="relative">
               {course.imageUrl ? (
                 <div className="relative h-64 md:h-96">
-                  <div className="absolute inset-0">
-                    <div className="w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
-                      {course.title}
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
-                  </div>
+                  <img
+                    src={course.imageUrl}
+                    alt={course.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
                 </div>
               ) : (
-                <div className="h-64 md:h-80 bg-gradient-to-br from-blue-600 to-purple-600"></div>
+                <div className="relative h-64 md:h-96">
+                  <div className="w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+                    {course.title}
+                  </div>
+                </div>
               )}
               <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
                 <div className="flex flex-wrap gap-3 mb-4">
@@ -183,7 +205,7 @@ export default function ExamDetailPage() {
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-4 items-center">
-                    {user && userAccess?.hasAccess ? (
+                    {user && userAccess?.isEnrolled ? (
                       <Link
                         href={`/exams/${course.slug || course.id}/study`}
                         className="w-full sm:w-auto"
@@ -318,8 +340,8 @@ export default function ExamDetailPage() {
                     </CardHeader>
                     <CardContent className="space-y-2">
                       {course.modules.map((module: any, index: number) => {
-                        const isFree = module.isFree || index === 0; // First module is always free
-                        const hasAccess = userAccess?.hasAccess || isFree;
+                        const isFree = module.isFree;
+                        const hasAccess = userAccess?.isEnrolled && (isFree || userAccess?.hasPaid);
                         
                         return (
                           <div

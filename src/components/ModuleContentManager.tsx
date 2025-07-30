@@ -39,6 +39,7 @@ interface Quiz {
   id: string;
   title: string;
   description: string;
+  type: 'PRACTICE' | 'ASSESSMENT';
   questions: Question[];
   timeLimit: number;
   passingScore: number;
@@ -51,6 +52,9 @@ interface PreviousYearQuestion {
   solution: string;
   difficulty: "easy" | "medium" | "hard";
   marks: number;
+  type?: "mcq" | "boolean" | "descriptive";
+  options?: string[];
+  correct?: number;
 }
 
 interface Module {
@@ -137,6 +141,9 @@ export function ModuleContentManager({
     solution: "",
     difficulty: "medium" as PreviousYearQuestion["difficulty"],
     marks: 1,
+    type: "descriptive" as "mcq" | "boolean" | "descriptive",
+    options: ["", "", "", ""],
+    correct: 0 as number | undefined,
   });
 
   const addPreviousYearQuestion = () => {
@@ -145,9 +152,20 @@ export function ModuleContentManager({
       return;
     }
 
+    // Validate MCQ options
+    if (newPrevQuestion.type === "mcq") {
+      const filledOptions = newPrevQuestion.options.filter(opt => opt.trim());
+      if (filledOptions.length < 2) {
+        alert("Please provide at least 2 options for multiple choice questions");
+        return;
+      }
+    }
+
     const prevQuestion: PreviousYearQuestion = {
       id: Date.now().toString(),
       ...newPrevQuestion,
+      options: newPrevQuestion.type === "descriptive" ? [] : newPrevQuestion.options,
+      correct: newPrevQuestion.type === "descriptive" ? undefined : newPrevQuestion.correct,
     };
 
     onModuleUpdate({
@@ -161,6 +179,9 @@ export function ModuleContentManager({
       solution: "",
       difficulty: "medium",
       marks: 1,
+      type: "descriptive",
+      options: ["", "", "", ""],
+      correct: 0,
     });
     setIsAddingContent(null);
   };
@@ -200,12 +221,18 @@ export function ModuleContentManager({
             <p className="text-sm text-gray-600">{selectedQuiz.description}</p>
           </div>
         </div>
-        {/* Quiz Question Selector for adding questions to the quiz */}
-        <QuizQuestionSelector
-          moduleQuestions={module.moduleQuestions}
-          quiz={selectedQuiz}
-          onSuccess={() => window.location.reload()}
-        />
+        {/* Direct Question Creation for the Quiz */}
+        <Card className="shadow-md border-0 mb-4">
+          <CardHeader>
+            <CardTitle className="text-base">Add Questions to {selectedQuiz.type === 'PRACTICE' ? 'Practice Set' : 'Quiz'}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <QuizQuestionForm
+              quizId={selectedQuiz.id}
+              onSuccess={() => window.location.reload()}
+            />
+          </CardContent>
+        </Card>
         {/* Existing quiz questions display (optional) */}
         <div className="space-y-3">
           <h4 className="font-medium mt-6">Questions in this Quiz</h4>
@@ -269,21 +296,17 @@ export function ModuleContentManager({
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="topics" className="flex items-center gap-2">
           <FileText className="h-4 w-4" />
           Topics ({module.topics?.length})
-        </TabsTrigger>
-        <TabsTrigger value="questions" className="flex items-center gap-2">
-          <HelpCircle className="h-4 w-4" />
-          Questions ({module.questions?.length})
         </TabsTrigger>
         <TabsTrigger value="quizzes" className="flex items-center gap-2">
           <ClipboardList className="h-4 w-4" />
           Quizzes ({module.quizzes.length})
         </TabsTrigger>
         <TabsTrigger value="previous" className="flex items-center gap-2">
-          <Calendar className="h-4 w-4" />
+          <Calendar className="h-3 w-3 mr-1" />
           Previous Year ({module.previousYearQuestions?.length})
         </TabsTrigger>
       </TabsList>
@@ -398,88 +421,35 @@ export function ModuleContentManager({
         </div>
       </TabsContent>
 
-      {/* Questions Tab */}
-      <TabsContent value="questions" className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Questions</h3>
-          <Button size="sm" onClick={() => setIsAddingContent("question")}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Question
-          </Button>
-        </div>
 
-        {isAddingContent === "question" && (
-          <Card className="shadow-md border-0">
-            <CardHeader>
-              <CardTitle className="text-base">Add New Question</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <StandaloneQuestionForm
-                moduleId={module.id}
-                onSuccess={() => {
-                  setIsAddingContent(null);
-                  if (typeof window !== "undefined") window.location.reload();
-                }}
-              />
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="space-y-3">
-          {module.moduleQuestions?.map((question) => (
-            <Card key={question.id} className="shadow-md border-0">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900">
-                      {question.question}
-                    </h4>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {question.type?.replace("-", " ") || "MCQ"}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        {Array.isArray(question.options) &&
-                        question.options.length > 0
-                          ? question.options[question.correct || 0]
-                          : question.correct === 1
-                          ? "True"
-                          : "False"}
-                      </Badge>
-                    </div>
-                  </div>
-                  {/* Optionally add delete button here */}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          {(!module.moduleQuestions || module.moduleQuestions.length === 0) && (
-            <div className="text-center py-8 text-gray-500">
-              No questions added yet. Create your first question to get started.
-            </div>
-          )}
-        </div>
-      </TabsContent>
-
-      {/* Quizzes Tab */}
+      {/* Quizzes Tab - Now handles both Practice and Assessment */}
       <TabsContent value="quizzes" className="space-y-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Quizzes</h3>
-          <Button size="sm" onClick={() => setIsAddingContent("quiz")}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Quiz
-          </Button>
+          <h3 className="text-lg font-semibold">Questions & Quizzes</h3>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => setIsAddingContent("practice-quiz")}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Practice Questions
+            </Button>
+            <Button size="sm" onClick={() => setIsAddingContent("assessment-quiz")}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Assessment Quiz
+            </Button>
+          </div>
         </div>
 
-        {isAddingContent === "quiz" && (
+        {isAddingContent === "practice-quiz" && (
           <Card className="shadow-md border-0">
             <CardHeader>
-              <CardTitle className="text-base">Create New Quiz</CardTitle>
+              <CardTitle className="text-base">Create Practice Question Set</CardTitle>
+              <p className="text-sm text-gray-600">
+                Practice questions are individual questions for students to practice. No time limit or passing score.
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <AddQuizForm
                 moduleId={module.id}
+                quizType="PRACTICE"
                 onSuccess={() => {
                   setIsAddingContent(null);
                   if (typeof window !== "undefined") window.location.reload();
@@ -489,59 +459,154 @@ export function ModuleContentManager({
           </Card>
         )}
 
-        <div className="space-y-3">
-          {module.quizzes.map((quiz) => (
-            <Card
-              key={quiz.id}
-              className="shadow-md border-0 hover:shadow-lg transition-shadow cursor-pointer"
-            >
-              <CardContent
-                className="p-4"
-                onClick={() => setSelectedQuiz(quiz)}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900">
-                      {quiz.title}
-                    </h4>
-                    {quiz.description && (
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                        {quiz.description}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="outline" className="text-xs">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {quiz.timeLimit}min
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        <Star className="h-3 w-3 mr-1" />
-                        {quiz.passingScore}%
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs">
-                        {quiz.questions.length} questions
-                      </Badge>
-                    </div>
-                  </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteQuiz(quiz.id);
-                    }}
+        {isAddingContent === "assessment-quiz" && (
+          <Card className="shadow-md border-0">
+            <CardHeader>
+              <CardTitle className="text-base">Create Assessment Quiz</CardTitle>
+              <p className="text-sm text-gray-600">
+                Assessment quizzes are formal tests with time limits and passing scores.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <AddQuizForm
+                moduleId={module.id}
+                quizType="ASSESSMENT"
+                onSuccess={() => {
+                  setIsAddingContent(null);
+                  if (typeof window !== "undefined") window.location.reload();
+                }}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Separate Practice Questions and Assessment Quizzes */}
+        <div className="space-y-6">
+          {/* Practice Questions Section */}
+          <div>
+            <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <HelpCircle className="h-4 w-4 text-blue-600" />
+              Practice Questions
+            </h4>
+            <div className="space-y-3">
+              {module.quizzes.filter(quiz => quiz.type === 'PRACTICE').map((quiz) => (
+                <Card
+                  key={quiz.id}
+                  className="shadow-md border-0 hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-blue-500"
+                >
+                  <CardContent
+                    className="p-4"
+                    onClick={() => setSelectedQuiz(quiz)}
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                            Practice
+                          </Badge>
+                          <h4 className="font-semibold text-gray-900">
+                            {quiz.title}
+                          </h4>
+                        </div>
+                        {quiz.description && (
+                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                            {quiz.description}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {quiz.questions.length} questions
+                          </Badge>
+                        </div>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteQuiz(quiz.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {module.quizzes.filter(quiz => quiz.type === 'PRACTICE').length === 0 && (
+                <div className="text-center py-6 text-gray-500 bg-blue-50 rounded-lg border-2 border-dashed border-blue-200">
+                  No practice questions yet. Create practice questions for students to study.
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-          {module.quizzes.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No quizzes created yet. Create your first quiz to get started.
+              )}
             </div>
-          )}
+          </div>
+
+          {/* Assessment Quizzes Section */}
+          <div>
+            <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-green-600" />
+              Assessment Quizzes
+            </h4>
+            <div className="space-y-3">
+              {module.quizzes.filter(quiz => quiz.type === 'ASSESSMENT').map((quiz) => (
+                <Card
+                  key={quiz.id}
+                  className="shadow-md border-0 hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-green-500"
+                >
+                  <CardContent
+                    className="p-4"
+                    onClick={() => setSelectedQuiz(quiz)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                            Assessment
+                          </Badge>
+                          <h4 className="font-semibold text-gray-900">
+                            {quiz.title}
+                          </h4>
+                        </div>
+                        {quiz.description && (
+                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                            {quiz.description}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {quiz.timeLimit}min
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            <Star className="h-3 w-3 mr-1" />
+                            {quiz.passingScore}%
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            {quiz.questions.length} questions
+                          </Badge>
+                        </div>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteQuiz(quiz.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {module.quizzes.filter(quiz => quiz.type === 'ASSESSMENT').length === 0 && (
+                <div className="text-center py-6 text-gray-500 bg-green-50 rounded-lg border-2 border-dashed border-green-200">
+                  No assessment quizzes yet. Create formal quizzes with time limits and passing scores.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </TabsContent>
 
@@ -563,7 +628,7 @@ export function ModuleContentManager({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 <div>
                   <Label htmlFor="prev-year">Year</Label>
                   <Input
@@ -578,6 +643,26 @@ export function ModuleContentManager({
                     }
                     className="mt-2"
                   />
+                </div>
+                <div>
+                  <Label htmlFor="prev-type">Question Type</Label>
+                  <select
+                    id="prev-type"
+                    value={newPrevQuestion.type}
+                    onChange={(e) =>
+                      setNewPrevQuestion((prev) => ({
+                        ...prev,
+                        type: e.target.value as "mcq" | "boolean" | "descriptive",
+                        options: e.target.value === "descriptive" ? [] : prev.options,
+                        correct: e.target.value === "descriptive" ? 0 : 0,
+                      }))
+                    }
+                    className="mt-2 flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="descriptive">Descriptive</option>
+                    <option value="mcq">Multiple Choice</option>
+                    <option value="boolean">True/False</option>
+                  </select>
                 </div>
                 <div>
                   <Label htmlFor="prev-difficulty">Difficulty</Label>
@@ -624,6 +709,82 @@ export function ModuleContentManager({
                   placeholder="Enter the question with rich content..."
                 />
               </div>
+              
+              {/* MCQ Options */}
+              {newPrevQuestion.type === "mcq" && (
+                <div>
+                  <Label>Options</Label>
+                  <div className="grid grid-cols-1 gap-2 mt-2">
+                    {newPrevQuestion.options.map((opt, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="correct"
+                          checked={newPrevQuestion.correct === idx}
+                          onChange={() =>
+                            setNewPrevQuestion((prev) => ({
+                              ...prev,
+                              correct: idx,
+                            }))
+                          }
+                          className="mr-2"
+                        />
+                        <Input
+                          value={opt}
+                          onChange={(e) => {
+                            const newOpts = [...newPrevQuestion.options];
+                            newOpts[idx] = e.target.value;
+                            setNewPrevQuestion((prev) => ({
+                              ...prev,
+                              options: newOpts,
+                            }));
+                          }}
+                          placeholder={`Option ${String.fromCharCode(65 + idx)}`}
+                          required={newPrevQuestion.type === "mcq"}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Boolean Options */}
+              {newPrevQuestion.type === "boolean" && (
+                <div>
+                  <Label>Correct Answer</Label>
+                  <div className="flex gap-4 mt-2">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="correct"
+                        checked={newPrevQuestion.correct === 0}
+                        onChange={() =>
+                          setNewPrevQuestion((prev) => ({
+                            ...prev,
+                            correct: 0,
+                          }))
+                        }
+                      />
+                      True
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="correct"
+                        checked={newPrevQuestion.correct === 1}
+                        onChange={() =>
+                          setNewPrevQuestion((prev) => ({
+                            ...prev,
+                            correct: 1,
+                          }))
+                        }
+                      />
+                      False
+                    </label>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <Label>Solution</Label>
                 <RichTextEditor
@@ -653,18 +814,15 @@ export function ModuleContentManager({
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900">
-                      {question.question}
-                    </h4>
-                    {question.solution && (
-                      <p className="text-sm text-gray-600 mt-2">
-                        {question.solution}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2 mb-2">
                       <Badge variant="outline" className="text-xs">
                         <Calendar className="h-3 w-3 mr-1" />
                         {question.year}
+                      </Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        {question.type === "mcq" && "Multiple Choice"}
+                        {question.type === "boolean" && "True/False"}
+                        {(question.type === "descriptive" || !question.type) && "Descriptive"}
                       </Badge>
                       <Badge
                         variant={getDifficultyBadgeVariant(question.difficulty)}
@@ -676,6 +834,53 @@ export function ModuleContentManager({
                         {question.marks} marks
                       </Badge>
                     </div>
+                    <h4 className="font-semibold text-gray-900 mb-2">
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: question.question.replace(/^<p>|<\/p>$/g, '')
+                        }}
+                      />
+                    </h4>
+                    
+                    {/* Show options for MCQ */}
+                    {question.type === "mcq" && question.options && (
+                      <div className="space-y-1 mb-2">
+                        {question.options.map((option: string, optIndex: number) => (
+                          <div
+                            key={optIndex}
+                            className={`text-sm p-2 rounded ${
+                              question.correct === optIndex
+                                ? "bg-green-100 text-green-800 border border-green-200"
+                                : "bg-gray-100"
+                            }`}
+                          >
+                            {String.fromCharCode(65 + optIndex)}. {option}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Show answer for Boolean */}
+                    {question.type === "boolean" && (
+                      <div className="mb-2">
+                        <span className="text-sm font-medium">Correct Answer: </span>
+                        <span className={`text-sm px-2 py-1 rounded ${
+                          question.correct === 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                        }`}>
+                          {question.correct === 0 ? "True" : "False"}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {question.solution && (
+                      <div className="mt-2">
+                        <span className="text-sm font-medium text-gray-700">Solution:</span>
+                        <div
+                          className="text-sm text-gray-600 mt-1 prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{ __html: question.solution }}
+                        />
+                      </div>
+                    )}
                   </div>
                   <Button
                     variant="destructive"
@@ -700,12 +905,12 @@ export function ModuleContentManager({
   );
 }
 
-// StandaloneQuestionForm: Add a standalone question to a module
-function StandaloneQuestionForm({
-  moduleId,
+// QuizQuestionForm: Add questions directly to a quiz
+function QuizQuestionForm({
+  quizId,
   onSuccess,
 }: {
-  moduleId: string;
+  quizId: string;
   onSuccess: () => void;
 }) {
   const [type, setType] = useState<"mcq" | "true-false">("mcq");
@@ -720,11 +925,11 @@ function StandaloneQuestionForm({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/module/question", {
+      const res = await fetch("/api/admin/quiz/question", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          moduleId,
+          quizId,
           type,
           question,
           options: type === "mcq" ? options : [],
@@ -732,6 +937,9 @@ function StandaloneQuestionForm({
         }),
       });
       if (res.ok) {
+        setQuestion("");
+        setOptions(["", "", "", ""]);
+        setCorrect(0);
         onSuccess();
       } else {
         const data = await res.json();
@@ -832,9 +1040,11 @@ function StandaloneQuestionForm({
 // AddQuizForm: Add a quiz group to a module
 function AddQuizForm({
   moduleId,
+  quizType = "ASSESSMENT",
   onSuccess,
 }: {
   moduleId: string;
+  quizType?: "PRACTICE" | "ASSESSMENT";
   onSuccess: () => void;
 }) {
   const [title, setTitle] = useState("");
@@ -856,8 +1066,9 @@ function AddQuizForm({
           moduleId,
           title,
           description,
-          passingMark,
-          timeLimit,
+          type: quizType,
+          passingMark: quizType === 'PRACTICE' ? 0 : passingMark,
+          timeLimit: quizType === 'PRACTICE' ? 0 : timeLimit,
         }),
       });
       if (res.ok) {
@@ -893,32 +1104,36 @@ function AddQuizForm({
           className="mt-2"
         />
       </div>
-      <div>
-        <Label>Passing Mark (%)</Label>
-        <Input
-          type="number"
-          value={passingMark}
-          onChange={(e) => setPassingMark(Number(e.target.value))}
-          min={0}
-          max={100}
-          className="mt-2"
-          required
-        />
-      </div>
-      <div>
-        <Label>Time Limit (minutes)</Label>
-        <Input
-          type="number"
-          value={timeLimit}
-          onChange={(e) => setTimeLimit(Number(e.target.value))}
-          min={1}
-          className="mt-2"
-          required
-        />
-      </div>
+      {quizType === 'ASSESSMENT' && (
+        <>
+          <div>
+            <Label>Passing Mark (%)</Label>
+            <Input
+              type="number"
+              value={passingMark}
+              onChange={(e) => setPassingMark(Number(e.target.value))}
+              min={0}
+              max={100}
+              className="mt-2"
+              required
+            />
+          </div>
+          <div>
+            <Label>Time Limit (minutes)</Label>
+            <Input
+              type="number"
+              value={timeLimit}
+              onChange={(e) => setTimeLimit(Number(e.target.value))}
+              min={1}
+              className="mt-2"
+              required
+            />
+          </div>
+        </>
+      )}
       {error && <div className="text-red-600 text-sm">{error}</div>}
       <Button type="submit" disabled={loading}>
-        {loading ? "Adding..." : "Add Quiz"}
+        {loading ? "Adding..." : `Add ${quizType === 'PRACTICE' ? 'Practice Questions' : 'Assessment Quiz'}`}
       </Button>
     </form>
   );

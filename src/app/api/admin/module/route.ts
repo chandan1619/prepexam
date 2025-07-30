@@ -9,6 +9,8 @@ const moduleSchema = z.object({
   title: z.string().min(3),
   description: z.string().optional(),
   examId: z.string(),
+  isFree: z.boolean().optional().default(false),
+  order: z.number().optional().default(0),
 });
 
 export async function POST(req: Request) {
@@ -22,12 +24,14 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    const { title, description, examId } = parsed.data;
+    const { title, description, examId, isFree, order } = parsed.data;
     const moduleData = await prisma.module.create({
       data: {
         title,
         description: description || null,
         examId,
+        isFree: isFree ?? false,
+        order: order ?? 0,
       },
       include: {
         blogPosts: true,

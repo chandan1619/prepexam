@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
 import { ArrowLeft, Calendar, BookOpen, Clock, Share2 } from "lucide-react";
+import BlogComments from "@/components/BlogComments";
 import "@/styles/rich-text.css";
 
 interface BlogPost {
@@ -237,6 +238,11 @@ export default function BlogPostPage() {
                 </Link>
               </div>
             </div>
+          </div>
+
+          {/* Comments Section */}
+          <div className="mt-8">
+            <BlogComments blogSlug={params.slug as string} />
           </div>
         </div>
       </div>

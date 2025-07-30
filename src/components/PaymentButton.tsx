@@ -39,10 +39,19 @@ export default function PaymentButton({
       return;
     }
 
+    // If already enrolled, don't try to enroll again
+    if (isEnrolled) {
+      toast({
+        title: "Already Enrolled",
+        description: "You are already enrolled in this course.",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Always enroll first (free enrollment with limited access)
+      // Enroll user (free enrollment with limited access)
       const response = await fetch("/api/enrollment", {
         method: "POST",
         headers: {
@@ -60,7 +69,16 @@ export default function PaymentButton({
         });
         onEnrollmentSuccess();
       } else {
-        throw new Error(data.error || "Enrollment failed");
+        // Handle the "Already enrolled" error gracefully
+        if (data.error === "Already enrolled") {
+          toast({
+            title: "Already Enrolled",
+            description: "You are already enrolled in this course.",
+          });
+          onEnrollmentSuccess(); // Still call success to refresh the UI
+        } else {
+          throw new Error(data.error || "Enrollment failed");
+        }
       }
     } catch (error: any) {
       toast({

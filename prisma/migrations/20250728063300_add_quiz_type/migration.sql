@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "QuizType" AS ENUM ('PRACTICE', 'ASSESSMENT');
+
+-- AlterTable
+ALTER TABLE "Quiz" ADD COLUMN "type" "QuizType" NOT NULL DEFAULT 'ASSESSMENT';

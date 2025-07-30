@@ -11,13 +11,13 @@ export async function GET() {
         id: true,
         title: true,
         excerpt: true,
-        isFree: true,
         isPublished: true,
         isFeatured: true,
         createdAt: true,
         module: {
           select: {
             title: true,
+            isFree: true,
             exam: {
               select: {
                 title: true,
@@ -40,7 +40,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     await requireAdmin();
-    const { moduleId, title, content, excerpt, isFree, isPublished, isFeatured } = await req.json();
+    const { moduleId, title, content, excerpt, isPublished, isFeatured } = await req.json();
     if (!moduleId || !title || !content) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -62,7 +62,6 @@ export async function POST(req: Request) {
         slug,
         content,
         excerpt,
-        isFree: isFree ?? false,
         isPublished: isPublished ?? false,
         isFeatured: isFeatured ?? false,
       },
@@ -70,12 +69,12 @@ export async function POST(req: Request) {
         id: true,
         title: true,
         excerpt: true,
-        isFree: true,
         isPublished: true,
         isFeatured: true,
         module: {
           select: {
             title: true,
+            isFree: true,
             exam: {
               select: {
                 title: true,

@@ -16,6 +16,21 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Edmission - Your Path to Success",
   description: "Master your exams with Edmission's comprehensive preparation platform",
+  keywords: "exam preparation, government exams, UPSC, SSC, banking exams, online learning, study materials",
+  authors: [{ name: "Edmission Team" }],
+  creator: "Edmission",
+  publisher: "Edmission",
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '16x16', type: 'image/x-icon' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    apple: [
+      { url: '/icon.svg', sizes: '180x180', type: 'image/svg+xml' },
+    ],
+  },
+  themeColor: '#3B82F6',
+  viewport: 'width=device-width, initial-scale=1',
 };
 
 export default function RootLayout({

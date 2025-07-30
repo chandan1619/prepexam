@@ -13,6 +13,9 @@ export async function GET(
       where: { id },
       include: {
         modules: {
+          orderBy: {
+            order: 'asc',
+          },
           include: {
             blogPosts: true,
             pyqs: true,

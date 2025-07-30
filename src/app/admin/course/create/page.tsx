@@ -14,6 +14,8 @@ import {
   BarChart3,
   Save,
   Eye,
+  Upload,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
@@ -27,6 +29,7 @@ interface CourseForm {
   duration: string;
   priceInINR: string;
   imageUrl: string;
+  imageFile: File | null;
 }
 
 export default function AdminCreateCoursePage() {
@@ -39,11 +42,13 @@ export default function AdminCreateCoursePage() {
     duration: "",
     priceInINR: "",
     imageUrl: "",
+    imageFile: null,
   });
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [imagePreview, setImagePreview] = useState<string>("");
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -53,18 +58,55 @@ export default function AdminCreateCoursePage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setForm({ ...form, imageFile: file, imageUrl: "" });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setForm({ ...form, imageFile: null, imageUrl: "" });
+    setImagePreview("");
+  };
+
+  const uploadImage = async (file: File): Promise<string> => {
+    // For now, we'll use a simple base64 approach
+    // In production, you'd want to upload to a cloud service like Cloudinary, AWS S3, etc.
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     setSuccess("");
     try {
+      let finalImageUrl = form.imageUrl;
+      
+      // If there's an image file, upload it first
+      if (form.imageFile) {
+        finalImageUrl = await uploadImage(form.imageFile);
+      }
+
       const res = await fetch("/api/admin/course", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
           priceInINR: Number(form.priceInINR),
+          imageUrl: finalImageUrl,
         }),
       });
       const data = await res.json();
@@ -79,7 +121,9 @@ export default function AdminCreateCoursePage() {
         duration: "",
         priceInINR: "",
         imageUrl: "",
+        imageFile: null,
       });
+      setImagePreview("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -323,25 +367,63 @@ export default function AdminCreateCoursePage() {
                     </div>
 
                     <div>
-                      <Label htmlFor="imageUrl">Course Image URL</Label>
-                      <Input
-                        id="imageUrl"
-                        name="imageUrl"
-                        placeholder="https://example.com/image.jpg"
-                        value={form.imageUrl}
-                        onChange={handleChange}
-                        className="mt-2"
-                      />
+                      <Label htmlFor="imageUrl">Course Image</Label>
+                      <div className="mt-2 space-y-4">
+                        {/* File Upload */}
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <input
+                              type="file"
+                              id="imageFile"
+                              accept="image/*"
+                              onChange={handleImageChange}
+                              className="hidden"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => document.getElementById('imageFile')?.click()}
+                              className="w-full"
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              Upload Image
+                            </Button>
+                          </div>
+                          <span className="text-gray-500">or</span>
+                        </div>
+                        
+                        {/* URL Input */}
+                        <Input
+                          id="imageUrl"
+                          name="imageUrl"
+                          placeholder="https://example.com/image.jpg"
+                          value={form.imageUrl}
+                          onChange={handleChange}
+                          disabled={!!form.imageFile}
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  {form.imageUrl && (
+                  {/* Image Preview */}
+                  {(imagePreview || form.imageUrl) && (
                     <div className="mt-4">
                       <Label>Preview</Label>
-                      <div className="mt-2">
-                        <div className="w-32 h-32 bg-gray-200 rounded-lg border flex items-center justify-center text-gray-500 text-sm">
-                          Preview Image
-                        </div>
+                      <div className="mt-2 relative inline-block">
+                        <img
+                          src={imagePreview || form.imageUrl}
+                          alt="Course preview"
+                          className="w-32 h-32 object-cover rounded-lg border"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={removeImage}
+                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
                       </div>
                     </div>
                   )}

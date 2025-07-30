@@ -63,7 +63,9 @@ export default clerkMiddleware(async (auth, req) => {
     : [
         'https://www.edmissions.site',
         'http://localhost:3000',
+        'http://localhost:3001',
         'https://localhost:3000',
+        'https://localhost:3001',
         process.env.NEXT_PUBLIC_CLERK_DOMAIN || 'http://localhost:3000'
       ],
 });

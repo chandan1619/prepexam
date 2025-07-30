@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Lock, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import LockedModuleContent from "@/components/LockedModuleContent";
+import QuizTimer from "@/components/QuizTimer";
 
 // Add global Razorpay type
 declare global {
@@ -35,6 +36,10 @@ export default function StudyPage() {
   const [quizQuestionIdx, setQuizQuestionIdx] = useState(0);
   const [userAccess, setUserAccess] = useState<any>(null);
   const [accessLoading, setAccessLoading] = useState(false);
+  const [isTimerActive, setIsTimerActive] = useState(false);
+  const [quizStartTime, setQuizStartTime] = useState<Date | null>(null);
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({});
+  const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
 
   useEffect(() => {
     async function fetchCourse() {
@@ -233,50 +238,112 @@ export default function StudyPage() {
   type LessonType =
     | { type: "blogPost"; id: string; title: string; content: string }
     | { type: "question"; id: string; question: string; options?: string[]; correct?: number }
-    | { type: "quiz"; id: string; title: string; questions: Array<{ id: string; question: string; options?: string[]; correct?: number }>; passingMark?: number; timeLimit?: number }
-    | { type: "pyq"; id: string; question: string; solution?: string; year?: number };
+    | { type: "quiz"; id: string; title: string; questions: Array<{ id: string; question: string; options?: string[]; correct?: number }>; passingMark?: number; timeLimit?: number; quizType?: string }
+    | { type: "pyq"; id: string; question: string; solution?: string; year?: number; pyqType?: string; options?: string[]; correct?: number };
 
   function getLessons(module: {
-    blogPosts?: Array<{ id: string; title: string; content: string }>;
-    moduleQuestions?: Array<{ id: string; question: string; options?: string[]; correct?: number; type?: string }>;
+    blogPosts?: Array<{ id: string; title: string; content: string; order?: number }>;
+    moduleQuestions?: Array<{ id: string; question: string; options?: string[]; correct?: number; type?: string; order?: number }>;
     quizzes?: Array<{
       id: string;
       title: string;
       questions: Array<{ id: string; question: string; options?: string[]; correct?: number }>;
       passingMark?: number;
       timeLimit?: number;
+      type?: string;
+      order?: number;
     }>;
-    pyqs?: Array<{ id: string; question: string; solution?: string; year?: number }>;
+    pyqs?: Array<{ id: string; question: string; solution?: string; year?: number; order?: number; type?: string; options?: string[]; correct?: number }>;
   }): LessonType[] {
-    return [
-      ...(module.blogPosts || []).map((item): LessonType => ({
+    const lessons = [
+      ...(module.blogPosts || []).map((item): LessonType & { order: number } => ({
         type: "blogPost",
         ...item,
+        order: item.order || 0,
       })),
-      ...(module.moduleQuestions || []).map((item): LessonType => ({
+      ...(module.moduleQuestions || []).map((item): LessonType & { order: number } => ({
         type: "question",
         id: item.id,
         question: item.question,
         options: item.options,
         correct: item.correct,
+        order: item.order || 0,
       })),
-      ...(module.quizzes || []).map((item): LessonType => ({
+      ...(module.quizzes || []).map((item): LessonType & { order: number; quizType?: string } => ({
         type: "quiz",
         id: item.id,
         title: item.title,
         questions: item.questions,
         passingMark: item.passingMark,
         timeLimit: item.timeLimit,
+        quizType: item.type,
+        order: item.order || 0,
       })),
-      ...(module.pyqs || []).map((item): LessonType => ({
+      ...(module.pyqs || []).map((item): LessonType & { order: number; pyqType?: string; options?: string[]; correct?: number } => ({
         type: "pyq",
         id: item.id,
         question: item.question,
         solution: item.solution,
         year: item.year,
+        pyqType: item.type,
+        options: item.options,
+        correct: item.correct,
+        order: item.order || 0,
       })),
     ];
+
+    // Sort by order field
+    return lessons.sort((a, b) => a.order - b.order);
   }
+
+  // Timer handlers
+  const startQuizTimer = () => {
+    setIsTimerActive(true);
+    setQuizStartTime(new Date());
+    setQuizAnswers({});
+    setIsQuizSubmitted(false);
+  };
+
+  const handleTimeUp = () => {
+    setIsTimerActive(false);
+    submitQuiz(true); // Auto-submit when time is up
+  };
+
+  const submitQuiz = (isAutoSubmit = false) => {
+    if (isQuizSubmitted) return;
+    
+    setIsQuizSubmitted(true);
+    setIsTimerActive(false);
+    
+    // Calculate score
+    const currentQuiz = currentLesson as any;
+    if (currentQuiz.questions) {
+      const totalQuestions = currentQuiz.questions.length;
+      let correctAnswers = 0;
+      
+      currentQuiz.questions.forEach((question: any, index: number) => {
+        const userAnswer = quizAnswers[question.id];
+        if (userAnswer === question.correct) {
+          correctAnswers++;
+        }
+      });
+      
+      const score = Math.round((correctAnswers / totalQuestions) * 100);
+      const passed = score >= (currentQuiz.passingMark || 40);
+      
+      // Show results
+      alert(`Quiz ${isAutoSubmit ? 'Auto-' : ''}Submitted!\n\nScore: ${score}%\nCorrect: ${correctAnswers}/${totalQuestions}\nStatus: ${passed ? 'PASSED' : 'FAILED'}`);
+    }
+  };
+
+  const handleQuizAnswer = (questionId: string, answerIndex: number) => {
+    if (isQuizSubmitted) return;
+    
+    setQuizAnswers(prev => ({
+      ...prev,
+      [questionId]: answerIndex
+    }));
+  };
 
   // Progress calculation
   const totalLessons = course
@@ -380,10 +447,27 @@ export default function StudyPage() {
       router.push(`/payment/checkout?examId=${course.id}&courseSlug=${slug}`);
       return;
     }
+    
+    // Reset quiz state when switching lessons
+    setIsTimerActive(false);
+    setQuizStartTime(null);
+    setQuizAnswers({});
+    setIsQuizSubmitted(false);
+    setSelectedOption(null);
+    setQuizQuestionIdx(0);
+    
     setCurrentModuleIdx(modIdx);
     setCurrentLessonIdx(lesIdx);
   };
   const goNext = () => {
+    // Reset quiz state when moving to next lesson
+    setIsTimerActive(false);
+    setQuizStartTime(null);
+    setQuizAnswers({});
+    setIsQuizSubmitted(false);
+    setSelectedOption(null);
+    setQuizQuestionIdx(0);
+    
     if (currentLessonIdx < lessons.length - 1) {
       setCurrentLessonIdx(currentLessonIdx + 1);
     } else if (currentModuleIdx < modules.length - 1) {
@@ -400,6 +484,14 @@ export default function StudyPage() {
   };
   
   const goPrev = () => {
+    // Reset quiz state when moving to previous lesson
+    setIsTimerActive(false);
+    setQuizStartTime(null);
+    setQuizAnswers({});
+    setIsQuizSubmitted(false);
+    setSelectedOption(null);
+    setQuizQuestionIdx(0);
+    
     if (currentLessonIdx > 0) {
       setCurrentLessonIdx(currentLessonIdx - 1);
     } else if (currentModuleIdx > 0) {
@@ -416,6 +508,14 @@ export default function StudyPage() {
 
   return (
     <PageLayout>
+      {/* Quiz Timer - only show for assessment quizzes */}
+      {currentLesson?.type === "quiz" && (currentLesson as any)?.quizType === "ASSESSMENT" && (
+        <QuizTimer
+          timeLimit={(currentLesson as any).timeLimit || 30}
+          onTimeUp={handleTimeUp}
+          isActive={isTimerActive}
+        />
+      )}
       <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         {/* Sidebar: Modules & Lessons */}
         <aside className="w-full md:w-72 lg:w-80 bg-white/90 backdrop-blur-sm border-r p-4 overflow-y-auto md:h-[calc(100vh-64px)] md:sticky md:top-16 rounded-2xl md:rounded-none md:rounded-l-3xl shadow-xl transition-all duration-300 ease-in-out hover:shadow-2xl">
@@ -474,21 +574,49 @@ export default function StudyPage() {
                             onClick={() => goToLesson(mIdx, lIdx)}
                             disabled={isLocked}
                           >
-                            <span className={`${
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                               isLocked
-                                ? "text-gray-400"
+                                ? "bg-gray-200 text-gray-400"
                                 : mIdx === currentModuleIdx && lIdx === currentLessonIdx
-                                ? "text-white"
-                                : "text-blue-500"
+                                ? "bg-white/20 text-white"
+                                : "bg-blue-50 text-blue-600"
                             }`}>
-                              {isLocked ? "🔒" :
-                               les.type === "blogPost" ? "📖" :
-                               les.type === "question" ? "❓" :
-                               les.type === "quiz" ? "📝" :
-                               les.type === "pyq" ? "📅" : "📄"}
-                            </span>
+                              {isLocked ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                              ) : les.type === "blogPost" ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                              ) : les.type === "question" ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              ) : les.type === "quiz" && (les as any).quizType === "PRACTICE" ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                                </svg>
+                              ) : les.type === "quiz" ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              ) : les.type === "pyq" ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              )}
+                            </div>
                             <span className="line-clamp-1">
-                              {les.title || les.question || les.year || "Lesson"}
+                              {les.title || (les.question ?
+                                <div dangerouslySetInnerHTML={{
+                                  __html: les.question.replace(/^<p>|<\/p>$/g, '')
+                                }} /> :
+                                les.year || "Lesson")}
                             </span>
                           </button>
                         </li>
@@ -664,8 +792,46 @@ export default function StudyPage() {
                           <span>{currentLesson.timeLimit} minutes</span>
                         </div>
                       </div>
+                      
+                      {/* Start Quiz Button - only for assessment quizzes */}
+                      {(currentLesson as any)?.quizType === "ASSESSMENT" && !isTimerActive && !isQuizSubmitted && (
+                        <div className="mt-4">
+                          <Button
+                            onClick={startQuizTimer}
+                            className="bg-white text-blue-600 hover:bg-blue-50 px-6 py-2 rounded-lg font-semibold"
+                          >
+                            Start Assessment Timer
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {/* Practice Quiz Info */}
+                      {(currentLesson as any)?.quizType === "PRACTICE" && (
+                        <div className="mt-4 bg-green-500/20 border border-green-300 rounded-lg p-3">
+                          <div className="flex items-center gap-2 text-green-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                            </svg>
+                            <span className="font-semibold">Practice Mode - No Time Limit</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Quiz Status */}
+                      {isQuizSubmitted && (
+                        <div className="mt-4 bg-green-500/20 border border-green-300 rounded-lg p-3">
+                          <div className="flex items-center gap-2 text-green-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            <span className="font-semibold">Quiz Completed</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    {currentLesson.questions &&
+                    {/* Show quiz content - for assessment: only if timer is active or submitted, for practice: always */}
+                    {(((currentLesson as any)?.quizType === "ASSESSMENT" && (isTimerActive || isQuizSubmitted)) ||
+                      (currentLesson as any)?.quizType === "PRACTICE") && currentLesson.questions &&
                     currentLesson.questions.length > 0 ? (
                       <div className="space-y-6">
                         {/* Progress indicator */}
@@ -674,7 +840,7 @@ export default function StudyPage() {
                             Question {quizQuestionIdx + 1} of {currentLesson.questions.length}
                           </div>
                           <div className="w-48 h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div 
+                            <div
                               className="h-full bg-blue-500 transition-all duration-300"
                               style={{ width: `${((quizQuestionIdx + 1) / currentLesson.questions.length) * 100}%` }}
                             ></div>
@@ -704,9 +870,15 @@ export default function StudyPage() {
                                               : "border-red-500 bg-red-50 shadow-lg shadow-red-100"
                                             : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
                                         }`}
-                                        onClick={() =>
-                                          setSelectedOption(`${q.id}-${oidx}`)
-                                        }
+                                        onClick={() => {
+                                          if (!isQuizSubmitted || (currentLesson as any)?.quizType === "PRACTICE") {
+                                            setSelectedOption(`${q.id}-${oidx}`);
+                                            if ((currentLesson as any)?.quizType === "ASSESSMENT") {
+                                              handleQuizAnswer(q.id, oidx);
+                                            }
+                                          }
+                                        }}
+                                        disabled={isQuizSubmitted && (currentLesson as any)?.quizType === "ASSESSMENT"}
                                       >
                                         <div className="flex items-start gap-4">
                                           <span className={`flex items-center justify-center w-8 h-8 rounded-lg text-sm font-semibold ${
@@ -771,31 +943,51 @@ export default function StudyPage() {
                                   </svg>
                                   Previous
                                 </Button>
-                                <Button
-                                  onClick={() => {
-                                    setSelectedOption(null);
-                                    setQuizQuestionIdx((idx) =>
-                                      Math.min(
-                                        currentLesson.questions.length - 1,
-                                        idx + 1
-                                      )
-                                    );
-                                  }}
-                                  disabled={
-                                    quizQuestionIdx ===
-                                    currentLesson.questions.length - 1
-                                  }
-                                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                  Next
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                                  </svg>
-                                </Button>
+                                {/* Submit button only for assessment quizzes */}
+                                {(currentLesson as any)?.quizType === "ASSESSMENT" && quizQuestionIdx === currentLesson.questions.length - 1 && !isQuizSubmitted ? (
+                                  <Button
+                                    onClick={() => submitQuiz(false)}
+                                    className="flex items-center gap-2 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
+                                  >
+                                    Submit Quiz
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    onClick={() => {
+                                      setSelectedOption(null);
+                                      setQuizQuestionIdx((idx) =>
+                                        Math.min(
+                                          currentLesson.questions.length - 1,
+                                          idx + 1
+                                        )
+                                      );
+                                    }}
+                                    disabled={
+                                      quizQuestionIdx ===
+                                      currentLesson.questions.length - 1 ||
+                                      (isQuizSubmitted && (currentLesson as any)?.quizType === "ASSESSMENT")
+                                    }
+                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    Next
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           );
                         })()}
+                      </div>
+                    ) : (currentLesson as any)?.quizType === "ASSESSMENT" && !isTimerActive && !isQuizSubmitted ? (
+                      <div className="text-center py-8">
+                        <div className="text-gray-500 mb-4">
+                          Click "Start Assessment Timer" to begin the quiz
+                        </div>
                       </div>
                     ) : (
                       <div className="text-gray-500">
@@ -811,11 +1003,119 @@ export default function StudyPage() {
                         <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
                           Year {currentLesson.year}
                         </div>
+                        <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                          {(currentLesson as any).pyqType === 'mcq' && 'Multiple Choice'}
+                          {(currentLesson as any).pyqType === 'boolean' && 'True/False'}
+                          {(currentLesson as any).pyqType === 'descriptive' && 'Descriptive'}
+                        </div>
                       </div>
-                      <div className="text-lg text-gray-900 leading-relaxed">
-                        {currentLesson.question}
+                      <div className="text-lg text-gray-900 leading-relaxed mb-4">
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: currentLesson.question.replace(/^<p>|<\/p>$/g, '')
+                          }}
+                        />
                       </div>
                     </div>
+
+                    {/* MCQ Options */}
+                    {(currentLesson as any).pyqType === 'mcq' && (currentLesson as any).options && (
+                      <div className="grid gap-3">
+                        {(currentLesson as any).options.map((opt: string, idx: number) => (
+                          <button
+                            key={idx}
+                            className={`w-full p-4 text-left rounded-xl border-2 transition-all duration-200 ${
+                              typeof selectedOption === "number" && selectedOption === idx
+                                ? idx === (currentLesson as any).correct
+                                  ? "border-green-500 bg-green-50 shadow-lg shadow-green-100"
+                                  : "border-red-500 bg-red-50 shadow-lg shadow-red-100"
+                                : "border-gray-200 hover:border-purple-300 hover:bg-purple-50"
+                            }`}
+                            onClick={() => setSelectedOption(idx)}
+                          >
+                            <div className="flex items-start gap-4">
+                              <span className={`flex items-center justify-center w-8 h-8 rounded-lg text-sm font-semibold ${
+                                typeof selectedOption === "number" && selectedOption === idx
+                                  ? idx === ((currentLesson as any).correct || 0)
+                                    ? "bg-green-500 text-white"
+                                    : "bg-red-500 text-white"
+                                  : "bg-gray-100 text-gray-600"
+                              }`}>
+                                {String.fromCharCode(65 + idx)}
+                              </span>
+                              <span className="flex-1 text-gray-700">{opt}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Boolean Options */}
+                    {(currentLesson as any).pyqType === 'boolean' && (
+                      <div className="grid gap-3">
+                        {['True', 'False'].map((opt: string, idx: number) => (
+                          <button
+                            key={idx}
+                            className={`w-full p-4 text-left rounded-xl border-2 transition-all duration-200 ${
+                              typeof selectedOption === "number" && selectedOption === idx
+                                ? idx === (currentLesson as any).correct
+                                  ? "border-green-500 bg-green-50 shadow-lg shadow-green-100"
+                                  : "border-red-500 bg-red-50 shadow-lg shadow-red-100"
+                                : "border-gray-200 hover:border-purple-300 hover:bg-purple-50"
+                            }`}
+                            onClick={() => setSelectedOption(idx)}
+                          >
+                            <div className="flex items-start gap-4">
+                              <span className={`flex items-center justify-center w-8 h-8 rounded-lg text-sm font-semibold ${
+                                typeof selectedOption === "number" && selectedOption === idx
+                                  ? idx === ((currentLesson as any).correct || 0)
+                                    ? "bg-green-500 text-white"
+                                    : "bg-red-500 text-white"
+                                  : "bg-gray-100 text-gray-600"
+                              }`}>
+                                {opt === 'True' ? 'T' : 'F'}
+                              </span>
+                              <span className="flex-1 text-gray-700">{opt}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Show feedback for MCQ and Boolean */}
+                    {((currentLesson as any).pyqType === 'mcq' || (currentLesson as any).pyqType === 'boolean') &&
+                     typeof selectedOption === "number" && selectedOption !== null && (
+                      <div className={`p-4 rounded-xl ${
+                        selectedOption === ((currentLesson as any).correct || 0)
+                          ? "bg-green-50 border-2 border-green-500"
+                          : "bg-red-50 border-2 border-red-500"
+                      }`}>
+                        {selectedOption === ((currentLesson as any).correct || 0) ? (
+                          <div className="flex items-center gap-2 text-green-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            <span className="font-semibold">Excellent! Your answer is correct!</span>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 text-red-700">
+                            <div className="flex items-center gap-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                              </svg>
+                              <span className="font-semibold">Not quite right. Keep trying!</span>
+                            </div>
+                            <div className="text-sm">
+                              {(currentLesson as any).pyqType === 'mcq' &&
+                                `The correct answer is: ${String.fromCharCode(65 + ((currentLesson as any).correct || 0))}`}
+                              {(currentLesson as any).pyqType === 'boolean' &&
+                                `The correct answer is: ${((currentLesson as any).correct || 0) === 0 ? 'True' : 'False'}`}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="flex justify-center">
                       <Button
                         onClick={() => setShowSolution(true)}

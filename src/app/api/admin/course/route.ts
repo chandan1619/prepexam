@@ -11,12 +11,12 @@ const courseSchema = z.object({
     .string()
     .min(3)
     .regex(/^[a-z0-9-]+$/),
-  description: z.string().min(10),
+  description: z.string().optional(), // Allow empty description
   category: z.string().optional(),
   level: z.string().optional(),
   duration: z.string().optional(),
-  priceInINR: z.number().int().min(0),
-  imageUrl: z.string().url().optional(),
+  priceInINR: z.coerce.number().int().min(0), // Coerce string to number
+  imageUrl: z.string().url().optional().or(z.literal("")), // Allow empty string for imageUrl
 });
 
 export async function POST(req: Request) {
@@ -44,12 +44,13 @@ export async function POST(req: Request) {
       data: {
         title,
         slug,
-        description,
+        description: description || "",
         category: category || null,
         level: level || null,
         duration: duration || null,
         priceInINR,
         imageUrl: imageUrl || null,
+        isPublished: true, // Set as published by default for admin-created courses
       },
     });
     return NextResponse.json({ exam });

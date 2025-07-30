@@ -1,0 +1,2 @@
+-- This migration was applied but the file was missing
+-- Adding empty migration to fix the migration state
