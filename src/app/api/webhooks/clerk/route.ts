@@ -129,13 +129,45 @@ export async function POST(request: Request) {
       const userData = evt.data as UserData;
       const { id } = userData;
 
-      // Delete user from your database
+      // Delete user and all related records from your database
       try {
-        await prisma.user.delete({
+        // First find the user to get the internal ID
+        const user = await prisma.user.findUnique({
           where: { clerkId: id },
+          select: { id: true }
         });
 
-        console.log("User deleted from database:", id);
+        if (!user) {
+          console.log("User not found in database:", id);
+          return NextResponse.json({ success: true });
+        }
+
+        // Use transaction to delete all related records first, then the user
+        await prisma.$transaction(async (tx) => {
+          // Delete related records first
+          await tx.comment.deleteMany({
+            where: { userId: user.id }
+          });
+          
+          await tx.userProgress.deleteMany({
+            where: { userId: user.id }
+          });
+          
+          await tx.enrollment.deleteMany({
+            where: { userId: user.id }
+          });
+          
+          await tx.purchase.deleteMany({
+            where: { userId: user.id }
+          });
+
+          // Finally delete the user
+          await tx.user.delete({
+            where: { clerkId: id },
+          });
+        });
+
+        console.log("User and related records deleted from database:", id);
         return NextResponse.json({ success: true });
       } catch (error) {
         console.error("Error deleting user from database:", error);
