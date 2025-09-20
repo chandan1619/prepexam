@@ -9,18 +9,36 @@ export async function PATCH(
   try {
     await requireAdmin();
     const { id } = await params;
-    const { isFeatured } = await req.json();
+    const body = await req.json();
 
-    // Toggle featured status and ensure the post is published
+    // Handle different types of updates
+    const updateData: any = {};
+    
+    if (body.isFeatured !== undefined) {
+      updateData.isFeatured = body.isFeatured;
+      updateData.isPublished = true; // Ensure featured posts are always published
+    }
+    
+    if (body.title !== undefined) {
+      updateData.title = body.title;
+    }
+    
+    if (body.content !== undefined) {
+      updateData.content = body.content;
+    }
+    
+    if (body.excerpt !== undefined) {
+      updateData.excerpt = body.excerpt;
+    }
+
     const updatedPost = await prisma.blogPost.update({
       where: { id },
-      data: {
-        isFeatured,
-        isPublished: true, // Ensure featured posts are always published
-      },
+      data: updateData,
       select: {
         id: true,
         title: true,
+        content: true,
+        excerpt: true,
         isFeatured: true,
         isPublished: true,
         module: {

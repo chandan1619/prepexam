@@ -141,6 +141,13 @@ export default function AdminDashboardPage() {
       color: "bg-green-500",
     },
     {
+      title: "Course Access Management",
+      description: "Grant full access to users who paid via WhatsApp",
+      icon: "💬",
+      href: "/admin/course-access",
+      color: "bg-emerald-500",
+    },
+    {
       title: "Manage Blogs",
       description: "Feature blogs on landing page for marketing",
       icon: "📰",

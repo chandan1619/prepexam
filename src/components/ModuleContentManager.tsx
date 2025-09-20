@@ -15,8 +15,10 @@ import {
   Clock,
   Star,
   CheckCircle,
+  Edit,
 } from "lucide-react";
 import RichTextEditor from "./RichTextEditor";
+import { LoadingOverlay, ButtonLoader } from "./ui/loader";
 
 interface Topic {
   id: string;
@@ -85,6 +87,9 @@ export function ModuleContentManager({
 }: ModuleContentManagerProps) {
   const [activeTab, setActiveTab] = useState("topics");
   const [isAddingContent, setIsAddingContent] = useState<string | null>(null);
+  const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
 
   // Topic Management
   const [newTopic, setNewTopic] = useState({
@@ -93,31 +98,86 @@ export function ModuleContentManager({
     duration: "",
   });
 
-  const addTopic = () => {
+  const addTopic = async () => {
     if (!newTopic.title.trim()) {
       alert("Please enter a topic title");
       return;
     }
 
-    const topic: Topic = {
-      id: Date.now().toString(),
-      ...newTopic,
-    };
+    setIsLoading(true);
+    setLoadingMessage("Adding topic...");
 
-    onModuleUpdate({
-      ...module,
-      topics: [...module.topics, topic],
-    });
+    try {
+      const topic: Topic = {
+        id: Date.now().toString(),
+        ...newTopic,
+      };
 
-    setNewTopic({ title: "", content: "", duration: "" });
-    setIsAddingContent(null);
+      await onModuleUpdate({
+        ...module,
+        topics: [...(module.topics || []), topic],
+      });
+
+      setNewTopic({ title: "", content: "", duration: "" });
+      setIsAddingContent(null);
+    } catch (error) {
+      console.error("Failed to add topic:", error);
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage("");
+    }
   };
 
   const deleteTopic = (topicId: string) => {
     onModuleUpdate({
       ...module,
-      topics: module.topics?.filter((t) => t.id !== topicId),
+      topics: (module.topics || []).filter((t) => t.id !== topicId),
     });
+  };
+
+  const editTopic = (topic: Topic) => {
+    setEditingTopic(topic);
+    setNewTopic({
+      title: topic.title,
+      content: topic.content,
+      duration: topic.duration,
+    });
+    setIsAddingContent("edit-topic");
+  };
+
+  const updateTopic = async () => {
+    if (!editingTopic || !newTopic.title.trim()) {
+      alert("Please enter a topic title");
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingMessage("Updating topic...");
+
+    try {
+      const updatedTopic: Topic = {
+        ...editingTopic,
+        title: newTopic.title,
+        content: newTopic.content,
+        duration: newTopic.duration,
+      };
+
+      await onModuleUpdate({
+        ...module,
+        topics: (module.topics || []).map((t) =>
+          t.id === editingTopic.id ? updatedTopic : t
+        ),
+      });
+
+      setNewTopic({ title: "", content: "", duration: "" });
+      setEditingTopic(null);
+      setIsAddingContent(null);
+    } catch (error) {
+      console.error("Failed to update topic:", error);
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage("");
+    }
   };
 
   // Question Management
@@ -295,11 +355,12 @@ export function ModuleContentManager({
   }
 
   return (
+    <>
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="topics" className="flex items-center gap-2">
           <FileText className="h-4 w-4" />
-          Topics ({module.topics?.length})
+          Topics ({module.topics?.length || 0})
         </TabsTrigger>
         <TabsTrigger value="quizzes" className="flex items-center gap-2">
           <ClipboardList className="h-4 w-4" />
@@ -321,10 +382,12 @@ export function ModuleContentManager({
           </Button>
         </div>
 
-        {isAddingContent === "topic" && (
+        {(isAddingContent === "topic" || isAddingContent === "edit-topic") && (
           <Card className="shadow-md border-0">
             <CardHeader>
-              <CardTitle className="text-base">Add New Topic</CardTitle>
+              <CardTitle className="text-base">
+                {isAddingContent === "edit-topic" ? "Edit Topic" : "Add New Topic"}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -365,10 +428,27 @@ export function ModuleContentManager({
                 />
               </div>
               <div className="flex gap-2">
-                <Button onClick={addTopic}>Add Topic</Button>
+                <Button
+                  onClick={isAddingContent === "edit-topic" ? updateTopic : addTopic}
+                  disabled={isLoading}
+                  className="cursor-pointer"
+                >
+                  {isLoading ? (
+                    <>
+                      <ButtonLoader size="sm" />
+                      {isAddingContent === "edit-topic" ? "Updating..." : "Adding..."}
+                    </>
+                  ) : (
+                    isAddingContent === "edit-topic" ? "Update Topic" : "Add Topic"
+                  )}
+                </Button>
                 <Button
                   variant="outline"
-                  onClick={() => setIsAddingContent(null)}
+                  onClick={() => {
+                    setIsAddingContent(null);
+                    setEditingTopic(null);
+                    setNewTopic({ title: "", content: "", duration: "" });
+                  }}
                 >
                   Cancel
                 </Button>
@@ -378,7 +458,7 @@ export function ModuleContentManager({
         )}
 
         <div className="space-y-3">
-          {module.topics?.map((topic) => (
+          {(module.topics || []).map((topic) => (
             <Card key={topic.id} className="shadow-md border-0">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
@@ -402,18 +482,27 @@ export function ModuleContentManager({
                       )}
                     </div>
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => deleteTopic(topic.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => editTopic(topic)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteTopic(topic.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
-          {module.topics?.length === 0 && (
+          {(!module.topics || module.topics.length === 0) && (
             <div className="text-center py-8 text-gray-500">
               No topics added yet. Create your first topic to get started.
             </div>
@@ -902,6 +991,8 @@ export function ModuleContentManager({
         </div>
       </TabsContent>
     </Tabs>
+    <LoadingOverlay isVisible={isLoading} message={loadingMessage} />
+    </>
   );
 }
 

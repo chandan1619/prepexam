@@ -96,53 +96,107 @@ export default function CourseModulesPage() {
 
   // Implement updateModule to persist new topics as blog posts
   const updateModule = async (moduleId: string, updatedModule: {
-    topics?: Array<{ title: string; content: string }>;
+    topics?: Array<{ id?: string; title: string; content: string; duration?: string }>;
     quizzes?: Array<{ title?: string; question?: string; options?: string[]; correct?: number; questions?: Array<{ options?: string[]; correct?: number }> }>;
     previousYearQuestions?: Array<{ question: string; solution?: string; year?: number }>;
   }) => {
     if (!course) return;
     const currentModule = course.modules.find((m) => m.id === moduleId);
     
-    // Add Topic (Blog Post)
-    if (
-      updatedModule.topics &&
-      updatedModule.topics.length > (currentModule?.blogPosts?.length || 0)
-    ) {
-      const newTopic = updatedModule.topics[updatedModule.topics.length - 1];
-      if (!newTopic) return;
+    // Handle Topic Updates (Blog Posts)
+    if (updatedModule.topics) {
+      const currentTopics = currentModule?.blogPosts || [];
       
-      try {
-        const res = await fetch("/api/admin/blog", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            moduleId,
-            title: newTopic.title,
-            content: newTopic.content,
-            isFree: false,
-          }),
-        });
+      // Check if we're adding a new topic
+      if (updatedModule.topics.length > currentTopics.length) {
+        const newTopic = updatedModule.topics[updatedModule.topics.length - 1];
+        if (!newTopic) return;
         
-        if (res.ok) {
-          const newBlogPost = await res.json();
-          // Update state locally instead of full refresh
-          setCourse(prevCourse => {
-            if (!prevCourse) return prevCourse;
-            return {
-              ...prevCourse,
-              modules: prevCourse.modules.map(module =>
-                module.id === moduleId
-                  ? { ...module, blogPosts: [...module.blogPosts, newBlogPost.blogPost] }
-                  : module
-              )
-            };
+        try {
+          const res = await fetch("/api/admin/blog", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              moduleId,
+              title: newTopic.title,
+              content: newTopic.content,
+              isFree: false,
+            }),
           });
-          setSuccess("Topic added successfully!");
+          
+          if (res.ok) {
+            const newBlogPost = await res.json();
+            setCourse(prevCourse => {
+              if (!prevCourse) return prevCourse;
+              return {
+                ...prevCourse,
+                modules: prevCourse.modules.map(module =>
+                  module.id === moduleId
+                    ? { ...module, blogPosts: [...module.blogPosts, newBlogPost.blogPost] }
+                    : module
+                )
+              };
+            });
+            setSuccess("Topic added successfully!");
+          }
+        } catch (error) {
+          setError("Failed to add topic");
         }
-      } catch (error) {
-        setError("Failed to add topic");
+        return;
       }
-      return;
+      
+      // Check if we're updating an existing topic
+      for (const topic of updatedModule.topics) {
+        if (topic.id) {
+          const currentTopic = currentTopics.find(t => t.id === topic.id);
+          if (currentTopic && (
+            currentTopic.title !== topic.title ||
+            currentTopic.content !== topic.content
+          )) {
+            try {
+              const res = await fetch(`/api/admin/blog/${topic.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  title: topic.title,
+                  content: topic.content,
+                }),
+              });
+              
+              if (res.ok) {
+                const updatedBlogPost = await res.json();
+                setCourse(prevCourse => {
+                  if (!prevCourse) return prevCourse;
+                  return {
+                    ...prevCourse,
+                    modules: prevCourse.modules.map(module =>
+                      module.id === moduleId
+                        ? {
+                            ...module,
+                            blogPosts: module.blogPosts.map(post =>
+                              post.id === topic.id ? {
+                                ...post,
+                                title: updatedBlogPost.title,
+                                content: updatedBlogPost.content
+                              } : post
+                            )
+                          }
+                        : module
+                    )
+                  };
+                });
+                setSuccess("Topic updated successfully!");
+              } else {
+                const errorData = await res.json();
+                setError(errorData.error || "Failed to update topic");
+              }
+            } catch (error) {
+              setError("Failed to update topic");
+            }
+            return;
+          }
+        }
+      }
     }
     
     // Add Quiz (MCQ)
@@ -914,3 +968,4 @@ export default function CourseModulesPage() {
     </PageLayout>
   );
 }
+

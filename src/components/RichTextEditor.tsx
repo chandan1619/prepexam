@@ -171,8 +171,22 @@ export default function RichTextEditor({
 
   const handleLinkSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (linkUrl) {
-      editor?.chain().focus().setLink({ href: linkUrl }).run();
+    if (linkUrl.trim()) {
+      // Ensure URL has proper protocol
+      let url = linkUrl.trim();
+      if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('mailto:')) {
+        url = 'https://' + url;
+      }
+      
+      // Check if there's selected text, if not, insert the URL as text
+      const { from, to } = editor?.state.selection || { from: 0, to: 0 };
+      if (from === to) {
+        // No text selected, insert the URL as both text and link
+        editor?.chain().focus().insertContent(`<a href="${url}">${linkUrl.trim()}</a>`).run();
+      } else {
+        // Text is selected, just add the link
+        editor?.chain().focus().setLink({ href: url }).run();
+      }
     } else {
       editor?.chain().focus().unsetLink().run();
     }

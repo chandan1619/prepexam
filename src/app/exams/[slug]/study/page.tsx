@@ -42,51 +42,58 @@ export default function StudyPage() {
   const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
 
   useEffect(() => {
-    async function fetchCourse() {
+    async function fetchCourseAndAccess() {
+      if (!slug || !user) return;
+      
       setLoading(true);
+      setAccessLoading(true);
       setError("");
+      
       try {
-        const res = await fetch(`/api/course/${slug}`);
-        const data = await res.json();
-        if (res.ok && data.course) {
-          setCourse(data.course);
-        } else {
-          setError(data.error || "Course not found");
+        // Fetch course first
+        const courseRes = await fetch(`/api/course/${slug}`);
+        const courseData = await courseRes.json();
+        
+        if (!courseRes.ok || !courseData.course) {
+          setError(courseData.error || "Course not found");
+          setLoading(false);
+          setAccessLoading(false);
+          return;
         }
+        
+        setCourse(courseData.course);
+        
+        // Then immediately check access
+        try {
+          const accessRes = await fetch(`/api/user/access?examId=${courseData.course.id}`);
+          const accessData = await accessRes.json();
+          if (accessRes.ok) {
+            setUserAccess(accessData);
+          }
+        } catch (err) {
+          console.error("Failed to check user access:", err);
+        }
+        
       } catch {
         setError("Failed to load course");
       }
-      setLoading(false);
-    }
-    if (slug) fetchCourse();
-  }, [slug]);
-
-  useEffect(() => {
-    async function checkUserAccess() {
-      if (!user || !course) return;
       
-      setAccessLoading(true);
-      try {
-        const res = await fetch(`/api/user/access?examId=${course.id}`);
-        const data = await res.json();
-        if (res.ok) {
-          setUserAccess(data);
-        }
-      } catch (err) {
-        console.error("Failed to check user access:", err);
-      }
+      setLoading(false);
       setAccessLoading(false);
     }
     
-    checkUserAccess();
-  }, [user, course]);
+    fetchCourseAndAccess();
+  }, [slug, user]);
 
   // Ensure user starts with an accessible module
   useEffect(() => {
-    if (!course || !course.modules || !userAccess) return;
+    if (!course || !course.modules) return;
+    
+    // Only run this logic after access check is complete
+    if (accessLoading || userAccess === null) return;
     
     const modules = course.modules;
-    const hasModuleAccess = (moduleIndex: number) => {
+    const hasModuleAccessForInit = (moduleIndex: number) => {
       if (!course || !course.modules[moduleIndex]) return false;
       
       const moduleData = course.modules[moduleIndex];
@@ -101,21 +108,26 @@ export default function StudyPage() {
       return userAccess?.hasPaid || false;
     };
 
-    if (modules.length > 0 && !hasModuleAccess(currentModuleIdx)) {
+    if (modules.length > 0 && !hasModuleAccessForInit(currentModuleIdx)) {
       // Find the first accessible module
-      const firstAccessibleModule = modules.findIndex((_: any, idx: number) => hasModuleAccess(idx));
+      const firstAccessibleModule = modules.findIndex((_: any, idx: number) => hasModuleAccessForInit(idx));
       if (firstAccessibleModule !== -1) {
         setCurrentModuleIdx(firstAccessibleModule);
         setCurrentLessonIdx(0);
       }
     }
-  }, [userAccess, course, currentModuleIdx]);
+  }, [userAccess, course, currentModuleIdx, accessLoading]);
 
   // Check if user has access to current module
   const hasModuleAccess = (moduleIndex: number) => {
     if (!course || !course.modules[moduleIndex]) return false;
     
     const moduleData = course.modules[moduleIndex];
+    
+    // If access is still loading, optimistically show free modules as accessible
+    if (accessLoading || userAccess === null) {
+      return moduleData.isFree;
+    }
     
     // User must be enrolled to access any module
     if (!userAccess?.isEnrolled) return false;
@@ -127,108 +139,11 @@ export default function StudyPage() {
     return userAccess?.hasPaid || false;
   };
 
+  // WhatsApp payment flow - no longer needed since we're using WhatsApp redirect
+  // This function is kept for backward compatibility but not used
   const handleUpgrade = async () => {
-    if (!user || !course) return;
-
-    setLoading(true);
-    try {
-      // Create payment order
-      const orderResponse = await fetch("/api/payment/create-order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ examId: course.id }),
-      });
-
-      const orderData = await orderResponse.json();
-
-      if (!orderResponse.ok) {
-        throw new Error(orderData.error || "Failed to create order");
-      }
-
-      // Load Razorpay script if not already loaded
-      if (!window.Razorpay) {
-        const script = document.createElement("script");
-        script.src = "https://checkout.razorpay.com/v1/checkout.js";
-        script.async = true;
-        document.body.appendChild(script);
-        
-        await new Promise((resolve) => {
-          script.onload = resolve;
-        });
-      }
-
-      // Configure Razorpay options
-      const options = {
-        key: orderData.key,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: "Edmission",
-        description: `Upgrade to Premium - ${course.title}`,
-        order_id: orderData.orderId,
-        prefill: {
-          email: user?.emailAddresses[0]?.emailAddress || "",
-          name: user?.fullName || "",
-        },
-        theme: {
-          color: "#3B82F6",
-        },
-        handler: async (response: any) => {
-          await verifyPayment(response);
-        },
-        modal: {
-          ondismiss: () => {
-            setLoading(false);
-          },
-        },
-      };
-
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
-    } catch (error: any) {
-      console.error("Payment error:", error);
-      setLoading(false);
-    }
-  };
-
-  const verifyPayment = async (paymentResponse: any) => {
-    try {
-      const response = await fetch("/api/payment/verify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          razorpay_order_id: paymentResponse.razorpay_order_id,
-          razorpay_payment_id: paymentResponse.razorpay_payment_id,
-          razorpay_signature: paymentResponse.razorpay_signature,
-          examId: course.id,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Refresh user access
-        const accessRes = await fetch(`/api/user/access?examId=${course.id}`);
-        const accessData = await accessRes.json();
-        if (accessRes.ok) {
-          setUserAccess(accessData);
-        }
-        
-        // Redirect to success page
-        window.location.href = `/payment/success?payment_id=${paymentResponse.razorpay_payment_id}&order_id=${paymentResponse.razorpay_order_id}`;
-      } else {
-        throw new Error(data.error || "Payment verification failed");
-      }
-    } catch (error: any) {
-      console.error("Payment verification error:", error);
-      // Redirect to failure page
-      window.location.href = `/payment/failed?error=payment_failed&order_id=${paymentResponse.razorpay_order_id}`;
-    } finally {
-      setLoading(false);
-    }
+    // This is now handled by the WhatsApp redirect in LockedModuleContent
+    console.log("WhatsApp payment flow - redirecting to WhatsApp");
   };
 
 
@@ -443,8 +358,13 @@ export default function StudyPage() {
   const goToLesson = (modIdx: number, lesIdx: number) => {
     // Check if user has access to this module
     if (!hasModuleAccess(modIdx)) {
-      // Redirect to payment page for locked modules
-      router.push(`/payment/checkout?examId=${course.id}&courseSlug=${slug}`);
+      // Show WhatsApp redirect for locked modules
+      const moduleTitle = modules[modIdx]?.title || "Premium Module";
+      const message = encodeURIComponent(
+        `Hi! I want to purchase the full course: "${course.title}". I'm trying to access the module "${moduleTitle}" which is locked. Please help me with the payment process. Course Price: ₹${course.priceInINR}`
+      );
+      const whatsappUrl = `https://wa.me/918789449507?text=${message}`;
+      window.open(whatsappUrl, '_blank');
       return;
     }
     
@@ -477,8 +397,13 @@ export default function StudyPage() {
         setCurrentModuleIdx(nextModuleIdx);
         setCurrentLessonIdx(0);
       } else {
-        // Redirect to payment page for locked next module
-        router.push(`/payment/checkout?examId=${course.id}&courseSlug=${slug}`);
+        // Show WhatsApp redirect for locked next module
+        const moduleTitle = modules[nextModuleIdx]?.title || "Premium Module";
+        const message = encodeURIComponent(
+          `Hi! I want to purchase the full course: "${course.title}". I'm trying to access the module "${moduleTitle}" which is locked. Please help me with the payment process. Course Price: ₹${course.priceInINR}`
+        );
+        const whatsappUrl = `https://wa.me/918789449507?text=${message}`;
+        window.open(whatsappUrl, '_blank');
       }
     }
   };
@@ -649,28 +574,41 @@ export default function StudyPage() {
                   </span>
                 </div>
               </div>
-            </div>
-            {/* Check if current module is locked */}
-            {!hasModuleAccess(currentModuleIdx) ? (
-              <Card className="shadow-xl border-0 mb-8 overflow-hidden bg-white/90 backdrop-blur-sm">
-                <CardHeader className="bg-gradient-to-r from-red-50 to-orange-50 border-b text-center">
-                  <CardTitle className="text-xl text-gray-900 flex items-center justify-center gap-2">
-                    <Lock className="h-6 w-6 text-red-500" />
-                    Premium Content
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 text-center">
-                  <p className="text-gray-600 mb-6">
-                    This module requires a premium subscription. You'll be redirected to the payment page.
-                  </p>
-                  <Button
-                    onClick={() => router.push(`/payment/checkout?examId=${course.id}&courseSlug=${slug}`)}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200"
+              
+              {/* Upgrade Button - Show only if user is enrolled but hasn't paid and course has premium content */}
+              {userAccess?.isEnrolled && !userAccess?.hasPaid && course.priceInINR > 0 && (
+                <div className="flex-shrink-0">
+                  <button
+                    onClick={() => {
+                      const message = encodeURIComponent(
+                        `Hi! I want to purchase the full course: "${course.title}". I'm currently enrolled but want to unlock all premium modules. Course Price: ₹${course.priceInINR}. My email: ${user?.emailAddresses[0]?.emailAddress || 'Not provided'}`
+                      );
+                      const whatsappUrl = `https://wa.me/918789449507?text=${message}`;
+                      window.open(whatsappUrl, '_blank');
+                    }}
+                    className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-green-500/25 transition-all duration-200 hover:scale-105"
                   >
-                    Upgrade to Premium
-                  </Button>
-                </CardContent>
-              </Card>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.087z"/>
+                    </svg>
+                    <span className="hidden sm:inline">Upgrade to Premium</span>
+                    <span className="sm:hidden">Upgrade</span>
+                    <span className="bg-white/20 px-2 py-1 rounded-lg text-sm font-bold">
+                      ₹{course.priceInINR}
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+            {/* Check if current module is locked - but don't show locked state while access is loading */}
+            {!hasModuleAccess(currentModuleIdx) && !accessLoading && userAccess !== null ? (
+              <LockedModuleContent
+                moduleTitle={currentModule.title}
+                courseTitle={course.title}
+                coursePrice={course.priceInINR}
+                whatsappNumber="918789449507" // Your WhatsApp number
+                loading={loading}
+              />
             ) : (
               <Card className="shadow-xl border-0 mb-8 overflow-hidden bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
                 <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">

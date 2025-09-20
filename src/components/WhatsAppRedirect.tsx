@@ -1,10 +1,10 @@
 "use client";
 
-import { MessageCircle, Star, CheckCircle, Lock } from "lucide-react";
+import { MessageCircle, Star, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface LockedModuleContentProps {
+interface WhatsAppRedirectProps {
   moduleTitle: string;
   courseTitle: string;
   coursePrice: number;
@@ -12,13 +12,13 @@ interface LockedModuleContentProps {
   loading?: boolean;
 }
 
-export default function LockedModuleContent({
+export default function WhatsAppRedirect({
   moduleTitle,
   courseTitle,
   coursePrice,
   whatsappNumber = "918789449507", // Your WhatsApp number
   loading = false,
-}: LockedModuleContentProps) {
+}: WhatsAppRedirectProps) {
   
   const handleWhatsAppRedirect = () => {
     const message = encodeURIComponent(
@@ -28,9 +28,10 @@ export default function LockedModuleContent({
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
     window.open(whatsappUrl, '_blank');
   };
+
   return (
-    <Card className="shadow-xl border-0 overflow-hidden bg-gradient-to-br from-gray-50 to-blue-50">
-      <CardHeader className="bg-gradient-to-r from-blue-100 to-purple-100 border-b text-center">
+    <Card className="shadow-xl border-0 overflow-hidden bg-gradient-to-br from-gray-50 to-green-50">
+      <CardHeader className="bg-gradient-to-r from-green-100 to-emerald-100 border-b text-center">
         <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-200 mb-4">
           <MessageCircle className="h-8 w-8 text-green-600" />
         </div>
