@@ -34,7 +34,25 @@ export async function GET() {
       }
     });
 
-    return NextResponse.json(enrollments);
+    // Add payment status to each enrollment
+    const enrollmentsWithPaymentStatus = await Promise.all(
+      enrollments.map(async (enrollment) => {
+        const purchase = await prisma.purchase.findFirst({
+          where: {
+            userId: user.id,
+            examId: enrollment.examId,
+            paymentStatus: "SUCCESS"
+          }
+        });
+
+        return {
+          ...enrollment,
+          hasPaid: purchase !== null
+        };
+      })
+    );
+
+    return NextResponse.json(enrollmentsWithPaymentStatus);
   } catch (error) {
     console.error("Error fetching enrollments:", error);
     return NextResponse.json(
