@@ -105,9 +105,10 @@ export function ModuleContentManager({
     }
 
     setIsLoading(true);
-    setLoadingMessage("Adding topic...");
+    setLoadingMessage("Adding topic and creating blog post...");
 
     try {
+      // Create the topic through the module update system
       const topic: Topic = {
         id: Date.now().toString(),
         ...newTopic,
@@ -120,8 +121,12 @@ export function ModuleContentManager({
 
       setNewTopic({ title: "", content: "", duration: "" });
       setIsAddingContent(null);
+      
+      // Show success message
+      alert("Topic added successfully! It will appear as a blog post if marked as featured.");
     } catch (error) {
       console.error("Failed to add topic:", error);
+      alert("Failed to add topic. Please try again.");
     } finally {
       setIsLoading(false);
       setLoadingMessage("");
@@ -152,9 +157,28 @@ export function ModuleContentManager({
     }
 
     setIsLoading(true);
-    setLoadingMessage("Updating topic...");
+    setLoadingMessage("Updating topic and blog content...");
 
     try {
+      // Update the blog post content via API to ensure synchronization
+      const response = await fetch(`/api/admin/module/blog-post/${editingTopic.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: newTopic.title,
+          content: newTopic.content,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update blog post content');
+      }
+
+      const result = await response.json();
+      
+      // Update local state
       const updatedTopic: Topic = {
         ...editingTopic,
         title: newTopic.title,
@@ -172,8 +196,14 @@ export function ModuleContentManager({
       setNewTopic({ title: "", content: "", duration: "" });
       setEditingTopic(null);
       setIsAddingContent(null);
+      
+      // Show success message
+      if (result.message) {
+        alert(result.message);
+      }
     } catch (error) {
       console.error("Failed to update topic:", error);
+      alert("Failed to update topic. Please try again.");
     } finally {
       setIsLoading(false);
       setLoadingMessage("");
