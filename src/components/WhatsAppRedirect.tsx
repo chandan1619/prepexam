@@ -22,7 +22,7 @@ export default function WhatsAppRedirect({
   
   const handleWhatsAppRedirect = () => {
     const message = encodeURIComponent(
-      `Hi! I want to purchase the full course: "${courseTitle}". I'm currently trying to access the module "${moduleTitle}" which is locked. Please help me with the payment process. Course Price: ₹${coursePrice}`
+      `Hi! I want to purchase the full course: "${courseTitle}". I'm currently trying to access the module "${moduleTitle}" which is locked. Please help me with the payment process. Course Price: ₹499 (50% OFF from ₹999)`
     );
     
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
@@ -81,7 +81,13 @@ export default function WhatsAppRedirect({
         {/* Pricing */}
         <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg p-6 mb-6">
           <div className="text-sm opacity-90 mb-1">Upgrade to Premium</div>
-          <div className="text-3xl font-bold mb-2">₹{coursePrice}</div>
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <span className="text-lg opacity-75 line-through">₹999</span>
+            <div className="text-3xl font-bold">₹499</div>
+            <div className="bg-red-500 text-white px-2 py-1 rounded-lg text-sm font-bold">
+              50% OFF
+            </div>
+          </div>
           <div className="text-sm opacity-90">One-time payment • Lifetime access</div>
         </div>
 
@@ -99,7 +105,7 @@ export default function WhatsAppRedirect({
           ) : (
             <div className="flex items-center justify-center gap-2">
               <MessageCircle className="h-5 w-5" />
-              Contact on WhatsApp - ₹{coursePrice}
+              Contact on WhatsApp - ₹499 (50% OFF)
             </div>
           )}
         </Button>

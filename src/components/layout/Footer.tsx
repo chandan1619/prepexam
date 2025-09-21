@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Users, Award, Mail, Phone, MapPin } from "lucide-react";
+import { BookOpen, Users, Award, Mail, Phone, MapPin, Linkedin, Facebook, Twitter } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -71,18 +71,55 @@ export default function Footer() {
             <h4 className="text-lg font-semibold">Contact Us</h4>
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
-                <Mail className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                <span className="text-gray-400 text-sm">support@edmission.com</span>
-              </div>
-              <div className="flex items-center space-x-3">
                 <Phone className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                <span className="text-gray-400 text-sm">+91 98765 43210</span>
+                <div className="flex flex-col space-y-1">
+                  <a href="tel:+918809586507" className="text-gray-400 text-sm hover:text-white transition-colors">
+                    +91 88095 86507
+                  </a>
+                  <a href="tel:+918789449507" className="text-gray-400 text-sm hover:text-white transition-colors">
+                    +91 87894 49507
+                  </a>
+                </div>
               </div>
               <div className="flex items-start space-x-3">
                 <MapPin className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
                 <span className="text-gray-400 text-sm">
-                  New Delhi, India
+                  India
                 </span>
+              </div>
+              
+              {/* Social Media Links */}
+              <div className="pt-2">
+                <h5 className="text-sm font-medium text-gray-300 mb-3">Connect With Us</h5>
+                <div className="flex space-x-4">
+                  <a
+                    href="https://www.linkedin.com/in/chandannitap/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-blue-400 transition-colors"
+                    aria-label="LinkedIn"
+                  >
+                    <Linkedin className="h-5 w-5" />
+                  </a>
+                  <a
+                    href="https://www.facebook.com/161995chandan/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-blue-600 transition-colors"
+                    aria-label="Facebook"
+                  >
+                    <Facebook className="h-5 w-5" />
+                  </a>
+                  <a
+                    href="https://x.com/chandan88052726"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-gray-200 transition-colors"
+                    aria-label="Twitter/X"
+                  >
+                    <Twitter className="h-5 w-5" />
+                  </a>
+                </div>
               </div>
             </div>
           </div>

@@ -237,9 +237,23 @@ export default function ExamDetailPage() {
                     <div className="flex items-center gap-4 bg-gray-50 px-6 py-3 rounded-xl">
                       <div>
                         <p className="text-sm text-gray-500">Course Fee</p>
-                        <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                          {course.priceInINR === 0 ? "Free" : `₹${course.priceInINR}`}
-                        </p>
+                        {course.priceInINR === 0 ? (
+                          <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                            Free
+                          </p>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <div className="flex flex-col">
+                              <span className="text-sm text-gray-500 line-through">₹999</span>
+                              <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                ₹499
+                              </p>
+                            </div>
+                            <div className="bg-red-500 text-white px-2 py-1 rounded-lg text-xs font-bold">
+                              50% OFF
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

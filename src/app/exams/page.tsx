@@ -136,12 +136,28 @@ export default function ExamsPage() {
                         {course.title}
                       </h3>
                       <div className="flex flex-col items-end">
-                        <span className="text-sm text-gray-500">
-                          Starting from
-                        </span>
-                        <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                          ₹{course.priceInINR}
-                        </span>
+                        {course.priceInINR === 0 ? (
+                          <>
+                            <span className="text-sm text-gray-500">
+                              Starting from
+                            </span>
+                            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                              Free
+                            </span>
+                          </>
+                        ) : (
+                          <div className="text-right">
+                            <div className="flex items-center gap-2 justify-end mb-1">
+                              <span className="text-sm text-gray-500 line-through">₹999</span>
+                              <div className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
+                                50% OFF
+                              </div>
+                            </div>
+                            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                              ₹499
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <p className="text-gray-600 mt-2 mb-4 line-clamp-2">

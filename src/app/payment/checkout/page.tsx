@@ -262,7 +262,13 @@ function CheckoutPageContent() {
                   <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg p-6 mb-6">
                     <div className="text-center">
                       <div className="text-sm opacity-90 mb-1">Total Amount</div>
-                      <div className="text-4xl font-bold mb-2">₹{course.priceInINR}</div>
+                      <div className="flex items-center justify-center gap-3 mb-2">
+                        <span className="text-lg opacity-75 line-through">₹999</span>
+                        <div className="text-4xl font-bold">₹499</div>
+                        <div className="bg-red-500 text-white px-2 py-1 rounded-lg text-sm font-bold">
+                          50% OFF
+                        </div>
+                      </div>
                       <div className="text-sm opacity-90">One-time payment • No recurring charges</div>
                     </div>
                   </div>
@@ -300,7 +306,7 @@ function CheckoutPageContent() {
                         Processing...
                       </div>
                     ) : (
-                      `Pay ₹${course.priceInINR} Now`
+                      `Pay ₹499 Now (50% OFF)`
                     )}
                   </Button>
 
