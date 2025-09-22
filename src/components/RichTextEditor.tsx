@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
 import Underline from "@tiptap/extension-underline";
@@ -28,6 +28,8 @@ import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import { Extension } from "@tiptap/core";
 import { Button } from "@/components/ui/button";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
 
 import {
   Bold,
@@ -50,6 +52,9 @@ import {
   Highlighter,
   Eye,
   EyeOff,
+  FileText,
+  Edit3,
+  RefreshCw,
 } from "lucide-react";
 import { ColorPicker } from "./ui/color-picker";
 import { TableToolbar } from "./ui/table-toolbar";
@@ -82,6 +87,8 @@ export default function RichTextEditor({
   const [imageUrl, setImageUrl] = useState("");
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
+  const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'markdown' | 'raw-markdown'>('edit');
+  const [rawMarkdown, setRawMarkdown] = useState('');
 
   const editor = useEditor({
     extensions: [
@@ -169,6 +176,111 @@ export default function RichTextEditor({
     }
   }, [value, editor]);
 
+  // Detect if content looks like markdown
+  const isMarkdownContent = useMemo(() => {
+    const contentToCheck = rawMarkdown || value;
+    if (!contentToCheck) return false;
+    
+    // Check if content is HTML (from TipTap editor)
+    if (contentToCheck.includes('<p>') || contentToCheck.includes('<h1>') || contentToCheck.includes('<div>')) {
+      return false;
+    }
+    
+    // Check for common markdown patterns
+    const markdownPatterns = [
+      /^#{1,6}\s+/m,           // Headers
+      /^\*\s+/m,               // Bullet lists
+      /^\-\s+/m,               // Bullet lists with dash
+      /^\d+\.\s+/m,            // Numbered lists
+      /\*\*.*?\*\*/,           // Bold
+      /\*.*?\*/,               // Italic
+      /`.*?`/,                 // Inline code
+      /```[\s\S]*?```/,        // Code blocks
+      /^\>\s+/m,               // Blockquotes
+      /\[.*?\]\(.*?\)/,        // Links
+      /!\[.*?\]\(.*?\)/,       // Images
+      /^\s*\|.*\|.*\|/m,       // Tables
+      /^---+$/m,               // Horizontal rules
+    ];
+    
+    // Need at least 2 markdown patterns to be confident it's markdown
+    const matchCount = markdownPatterns.filter(pattern => pattern.test(contentToCheck)).length;
+    return matchCount >= 2;
+  }, [value, rawMarkdown]);
+
+  // Convert markdown to HTML
+  const markdownToHtml = useMemo(() => {
+    const markdownContent = rawMarkdown || value;
+    if (!markdownContent) return '';
+    
+    try {
+      const rawHtml = marked.parse(markdownContent);
+      return DOMPurify.sanitize(rawHtml as string);
+    } catch (error) {
+      console.error('Error parsing markdown:', error);
+      return markdownContent;
+    }
+  }, [value, rawMarkdown]);
+
+  // Handle markdown input change
+  const handleMarkdownChange = (newMarkdown: string) => {
+    setRawMarkdown(newMarkdown);
+    // Convert markdown to HTML and update the editor
+    try {
+      const htmlContent = marked.parse(newMarkdown);
+      const sanitizedHtml = DOMPurify.sanitize(htmlContent as string);
+      onChange(sanitizedHtml);
+    } catch (error) {
+      console.error('Error converting markdown:', error);
+      onChange(newMarkdown);
+    }
+  };
+
+  // Convert current content from markdown to HTML
+  const convertMarkdownToHtml = () => {
+    if (!editor || !value) return;
+    
+    try {
+      // Get the current text content (without HTML tags)
+      const textContent = editor.getText();
+      if (textContent && isMarkdownContent) {
+        const htmlContent = marked.parse(textContent);
+        const sanitizedHtml = DOMPurify.sanitize(htmlContent as string);
+        setRawMarkdown(textContent);
+        editor.commands.setContent(sanitizedHtml);
+        onChange(sanitizedHtml);
+      }
+    } catch (error) {
+      console.error('Error converting markdown:', error);
+    }
+  };
+
+  // Initialize raw markdown from value if it looks like markdown
+  useEffect(() => {
+    if (value && !rawMarkdown && isMarkdownContent) {
+      setRawMarkdown(value);
+    }
+  }, [value, rawMarkdown, isMarkdownContent]);
+
+  // Auto-convert markdown content when pasted
+  useEffect(() => {
+    if (editor && value && isMarkdownContent && !value.includes('<')) {
+      // If the content looks like markdown and doesn't contain HTML tags
+      try {
+        const htmlContent = marked.parse(value);
+        const sanitizedHtml = DOMPurify.sanitize(htmlContent as string);
+        if (sanitizedHtml !== value) {
+          // Only update if the conversion actually changed something
+          setRawMarkdown(value);
+          editor.commands.setContent(sanitizedHtml);
+          onChange(sanitizedHtml);
+        }
+      } catch (error) {
+        console.error('Error auto-converting markdown:', error);
+      }
+    }
+  }, [value, editor, isMarkdownContent, onChange]);
+
   const handleLinkSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (linkUrl.trim()) {
@@ -237,26 +349,70 @@ export default function RichTextEditor({
           <div className="flex items-center space-x-2">
             <Button
               size="sm"
-              variant={isPreview ? "default" : "ghost"}
-              onClick={() => setIsPreview(!isPreview)}
+              variant={viewMode === 'edit' ? "default" : "ghost"}
+              onClick={() => setViewMode('edit')}
               className="flex items-center gap-2 hover:bg-blue-50"
             >
-              {isPreview ? (
-                <>
-                  <EyeOff className="h-4 w-4" />
-                  <span className="text-sm font-medium">Edit</span>
-                </>
-              ) : (
-                <>
-                  <Eye className="h-4 w-4" />
-                  <span className="text-sm font-medium">Preview</span>
-                </>
-              )}
+              <EyeOff className="h-4 w-4" />
+              <span className="text-sm font-medium">Edit</span>
             </Button>
+            
+            <Button
+              size="sm"
+              variant={viewMode === 'preview' ? "default" : "ghost"}
+              onClick={() => setViewMode('preview')}
+              className="flex items-center gap-2 hover:bg-blue-50"
+            >
+              <Eye className="h-4 w-4" />
+              <span className="text-sm font-medium">Preview</span>
+            </Button>
+            
+            {isMarkdownContent && (
+              <Button
+                size="sm"
+                variant={viewMode === 'markdown' ? "default" : "ghost"}
+                onClick={() => setViewMode('markdown')}
+                className="flex items-center gap-2 hover:bg-green-50"
+              >
+                <FileText className="h-4 w-4" />
+                <span className="text-sm font-medium">Markdown</span>
+              </Button>
+            )}
+            
+            <Button
+              size="sm"
+              variant={viewMode === 'raw-markdown' ? "default" : "ghost"}
+              onClick={() => setViewMode('raw-markdown')}
+              className="flex items-center gap-2 hover:bg-purple-50"
+            >
+              <Edit3 className="h-4 w-4" />
+              <span className="text-sm font-medium">Raw MD</span>
+            </Button>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            {isMarkdownContent && (
+              <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-md border border-green-200">
+                Markdown detected
+              </div>
+            )}
+            
+            {isMarkdownContent && viewMode === 'edit' && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={convertMarkdownToHtml}
+                className="flex items-center gap-2 text-xs hover:bg-green-50 border-green-200"
+              >
+                <RefreshCw className="h-3 w-3" />
+                <span>Convert MD</span>
+              </Button>
+            )}
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        {viewMode === 'edit' && (
+          <div className="flex flex-wrap items-center gap-2">
           <ToolbarGroup>
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleBold().run()}
@@ -402,7 +558,8 @@ export default function RichTextEditor({
               }}
             />
           </ToolbarGroup>
-        </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -452,11 +609,26 @@ export default function RichTextEditor({
           )}
         </div>
       )}
-      {isPreview ? (
+      {viewMode === 'preview' ? (
         <div
-          className="min-h-[200px] prose prose-slate px-4 py-3 bg-white rounded-b border border-gray-200 richtext-content shadow-sm transition-all hover:shadow-md"
+          className="min-h-[200px] prose prose-slate max-w-none px-4 py-3 bg-white rounded-b border border-gray-200 richtext-content shadow-sm transition-all hover:shadow-md"
           dangerouslySetInnerHTML={{ __html: value }}
         />
+      ) : viewMode === 'markdown' ? (
+        <div
+          className="min-h-[200px] prose prose-slate max-w-none px-4 py-3 bg-white rounded-b border border-gray-200 richtext-content shadow-sm transition-all hover:shadow-md"
+          dangerouslySetInnerHTML={{ __html: markdownToHtml }}
+        />
+      ) : viewMode === 'raw-markdown' ? (
+        <div className="min-h-[200px] bg-white rounded-b border border-gray-200 shadow-sm transition-all hover:shadow-md">
+          <textarea
+            value={rawMarkdown}
+            onChange={(e) => handleMarkdownChange(e.target.value)}
+            placeholder="Enter your markdown content here..."
+            className="w-full h-full min-h-[200px] px-4 py-3 border-none outline-none resize-none font-mono text-sm leading-relaxed"
+            style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}
+          />
+        </div>
       ) : (
         <EditorContent editor={editor} />
       )}
