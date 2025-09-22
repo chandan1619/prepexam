@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import PaymentButton from "@/components/PaymentButton";
+import { fetchWithCache, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
 
 export default function ExamDetailPage() {
   const params = useParams();
@@ -35,14 +36,18 @@ export default function ExamDetailPage() {
       setLoading(true);
       setError("");
       try {
-        const res = await fetch(`/api/course/${slug}`);
-        const data = await res.json();
-        if (res.ok && data.course) {
+        const data = await fetchWithCache<{ course: any }>(
+          `/api/course/${slug}`,
+          CACHE_KEYS.COURSE_DETAIL(slug),
+          CACHE_TTL.COURSE_DETAIL
+        );
+        if (data.course) {
           setCourse(data.course);
         } else {
-          setError(data.error || "Course not found");
+          setError("Course not found");
         }
-      } catch {
+      } catch (error) {
+        console.error("Error fetching course:", error);
         setError("Failed to load course");
       }
       setLoading(false);
@@ -78,14 +83,20 @@ export default function ExamDetailPage() {
   }, [user, course]);
 
   const handleEnrollmentSuccess = async () => {
-    // Refresh user access after enrollment
+    // Refresh user access after enrollment and clear cache
     if (course) {
       try {
-        const res = await fetch(`/api/user/access?examId=${course.id}`);
-        const data = await res.json();
-        if (res.ok) {
-          setUserAccess(data);
-        }
+        // Clear the user access cache to force refresh
+        const cacheKey = CACHE_KEYS.USER_ACCESS(course.id);
+        const { clientCache } = await import("@/lib/cache");
+        clientCache.delete(cacheKey);
+        
+        const data = await fetchWithCache<any>(
+          `/api/user/access?examId=${course.id}`,
+          cacheKey,
+          CACHE_TTL.USER_ACCESS
+        );
+        setUserAccess(data);
       } catch (err) {
         console.error("Failed to refresh user access:", err);
       }
@@ -131,9 +142,9 @@ export default function ExamDetailPage() {
                   <img
                     src={course.imageUrl}
                     alt={course.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain bg-gray-100"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                 </div>
               ) : (
                 <div className="relative h-64 md:h-96">

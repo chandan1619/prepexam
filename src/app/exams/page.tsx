@@ -3,9 +3,10 @@
 import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
 import { useEffect, useState } from "react";
+import { fetchWithCache, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
 
 export default function ExamsPage() {
-  const [courses, setCourses] = useState<Array<{
+  type Course = {
     id: string;
     title: string;
     description: string;
@@ -15,15 +16,20 @@ export default function ExamsPage() {
     priceInINR: number;
     duration?: string;
     modules: Array<{ id: string }>;
-  }>>([]);
+  };
+
+  const [courses, setCourses] = useState<Course[]>([]);
   const [, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchCourses() {
       try {
         setLoading(true);
-        const res = await fetch("/api/courses");
-        const data = await res.json();
+        const data = await fetchWithCache<Course[]>(
+          "/api/courses",
+          CACHE_KEYS.COURSES,
+          CACHE_TTL.COURSES
+        );
         setCourses(data);
       } catch (error) {
         console.error("Error fetching courses:", error);
@@ -81,9 +87,15 @@ export default function ExamsPage() {
           </div>
 
           {/* Exams Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={`grid gap-6 ${
+            courses.length === 1
+              ? 'justify-center'
+              : courses.length === 2
+                ? 'md:grid-cols-2 justify-center max-w-4xl mx-auto'
+                : 'md:grid-cols-2 lg:grid-cols-3'
+          }`}>
             {courses.length === 0 ? (
-              <div className="col-span-3 text-center py-12">
+              <div className="col-span-full text-center py-12">
                 <div className="bg-white rounded-2xl p-8 max-w-md mx-auto">
                   <div className="text-6xl mb-4">📚</div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
@@ -98,58 +110,70 @@ export default function ExamsPage() {
               courses.map((course) => (
                 <div
                   key={course.id}
-                  className="group bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                  className={`group bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl hover:border-blue-200 transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] ${
+                    courses.length === 1 ? 'max-w-md w-full' : ''
+                  }`}
                 >
                   {course.imageUrl ? (
-                    <div className="relative h-48">
+                    <div className="relative h-56 bg-gradient-to-br from-blue-50 to-purple-50">
                       <img
                         src={course.imageUrl}
                         alt={course.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       {course.category && (
                         <div className="absolute top-4 left-4">
-                          <span className="px-3 py-1 bg-blue-500/90 text-white text-sm font-medium rounded-lg">
+                          <span className="px-4 py-2 bg-white/95 backdrop-blur-sm text-blue-700 text-sm font-bold rounded-full shadow-lg border border-blue-200">
                             {course.category}
                           </span>
                         </div>
                       )}
+                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <div className="bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-lg">
+                          <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
                   ) : (
-                    <div className="relative h-48">
-                      <div className="w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
+                    <div className="relative h-56 bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700">
+                      <div className="w-full h-full flex items-center justify-center text-white text-xl font-bold relative z-10">
                         {course.title}
                       </div>
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-400/20"></div>
                       {course.category && (
                         <div className="absolute top-4 left-4">
-                          <span className="px-3 py-1 bg-blue-500/90 text-white text-sm font-medium rounded-lg">
+                          <span className="px-4 py-2 bg-white/95 backdrop-blur-sm text-blue-700 text-sm font-bold rounded-full shadow-lg">
                             {course.category}
                           </span>
                         </div>
                       )}
                     </div>
                   )}
-                  <div className="p-6">
-                    <div className="flex items-start justify-between gap-4">
-                      <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                  
+                  <div className="p-8">
+                    <div className="flex items-start justify-between gap-4 mb-4">
+                      <h3 className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300 leading-tight flex-1">
                         {course.title}
                       </h3>
                       <div className="flex flex-col items-end">
                         {course.priceInINR === 0 ? (
-                          <>
-                            <span className="text-sm text-gray-500">
+                          <div className="text-right">
+                            <span className="text-sm text-gray-500 font-medium block mb-1">
                               Starting from
                             </span>
-                            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                            <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                               Free
                             </span>
-                          </>
+                          </div>
                         ) : (
                           <div className="text-right">
                             <div className="flex items-center gap-2 justify-end mb-1">
-                              <span className="text-sm text-gray-500 line-through">₹999</span>
-                              <div className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
+                              <span className="text-sm text-gray-500 line-through font-medium">₹999</span>
+                              <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-2 py-1 rounded-lg text-xs font-bold shadow-md">
                                 50% OFF
                               </div>
                             </div>
@@ -160,49 +184,62 @@ export default function ExamsPage() {
                         )}
                       </div>
                     </div>
-                    <p className="text-gray-600 mt-2 mb-4 line-clamp-2">
+                    
+                    <p className="text-gray-600 mb-6 line-clamp-2 leading-relaxed">
                       {course.description}
                     </p>
-                    <div className="flex items-center gap-6 py-4 border-t">
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <svg
-                          className="w-5 h-5 text-blue-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                          />
-                        </svg>
-                        <span>{course.modules.length} Modules</span>
+                    
+                    <div className="flex items-center gap-6 py-4 mb-6 border-t border-gray-100">
+                      <div className="flex items-center gap-3 text-gray-600">
+                        <div className="bg-blue-100 rounded-full p-2">
+                          <svg
+                            className="w-4 h-4 text-blue-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                            />
+                          </svg>
+                        </div>
+                        <span className="font-medium">{course.modules.length} Modules</span>
                       </div>
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <svg
-                          className="w-5 h-5 text-blue-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        <span>{course.duration || "Self-paced"}</span>
+                      <div className="flex items-center gap-3 text-gray-600">
+                        <div className="bg-purple-100 rounded-full p-2">
+                          <svg
+                            className="w-4 h-4 text-purple-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                        <span className="font-medium">{course.duration || "Self-paced"}</span>
                       </div>
                     </div>
+                    
                     <Link
                       href={`/exams/${course.slug || course.id}`}
-                      className="block mt-4"
+                      className="block"
                     >
-                      <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200 cursor-pointer">
-                        View Course Details
+                      <button className="w-full bg-gradient-to-r from-blue-600 via-blue-700 to-purple-700 text-white py-4 px-8 rounded-2xl font-bold text-lg transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/30 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer relative overflow-hidden group">
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          View Course Details
+                          <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                          </svg>
+                        </span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       </button>
                     </Link>
                   </div>

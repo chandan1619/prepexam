@@ -33,8 +33,13 @@ export async function GET() {
     });
 
     const response = NextResponse.json(featuredPosts);
-    // Reduce cache time to 60 seconds to ensure changes reflect quickly
-    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
+    // Cache for 5 minutes, stale-while-revalidate for 15 minutes
+    response.headers.set(
+      'Cache-Control',
+      'public, s-maxage=300, stale-while-revalidate=900'
+    );
+    response.headers.set('CDN-Cache-Control', 'public, max-age=300');
+    response.headers.set('Vercel-CDN-Cache-Control', 'public, max-age=300');
     return response;
   } catch (err) {
     return NextResponse.json(

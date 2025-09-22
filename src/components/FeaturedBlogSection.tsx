@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { fetchWithCache, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
 
 interface FeaturedBlog {
   id: string;
@@ -24,11 +25,12 @@ export function FeaturedBlogSection() {
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
-        const response = await fetch('/api/blog/featured');
-        if (response.ok) {
-          const data = await response.json();
-          setBlogs(data);
-        }
+        const data = await fetchWithCache<FeaturedBlog[]>(
+          '/api/blog/featured',
+          CACHE_KEYS.FEATURED_BLOGS,
+          CACHE_TTL.FEATURED_BLOGS
+        );
+        setBlogs(data);
       } catch (error) {
         console.error("Failed to fetch featured blogs:", error);
       } finally {
