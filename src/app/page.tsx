@@ -638,7 +638,7 @@ export default function Home() {
               FREQUENTLY ASKED QUESTIONS
             </span>
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Got Questions? We've Got Answers
+              Got Questions? We&apos;ve Got Answers
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Everything you need to know about our Computer Science teaching exam preparation course
