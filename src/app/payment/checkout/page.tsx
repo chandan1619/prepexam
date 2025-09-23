@@ -6,7 +6,13 @@ import { useUser } from "@clerk/nextjs";
 import PageLayout from "@/components/layout/PageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Star, ArrowLeft, CreditCard, Smartphone } from "lucide-react";
+import {
+  CheckCircle,
+  Star,
+  ArrowLeft,
+  CreditCard,
+  Smartphone,
+} from "lucide-react";
 import Link from "next/link";
 
 // Add global Razorpay type
@@ -30,7 +36,7 @@ function CheckoutPageContent() {
   useEffect(() => {
     async function fetchCourse() {
       if (!examId) return;
-      
+
       try {
         const res = await fetch(`/api/course/${examId}`);
         const data = await res.json();
@@ -42,7 +48,7 @@ function CheckoutPageContent() {
       }
       setPageLoading(false);
     }
-    
+
     fetchCourse();
   }, [examId]);
 
@@ -72,7 +78,7 @@ function CheckoutPageContent() {
         script.src = "https://checkout.razorpay.com/v1/checkout.js";
         script.async = true;
         document.body.appendChild(script);
-        
+
         await new Promise((resolve) => {
           script.onload = resolve;
         });
@@ -179,7 +185,7 @@ function CheckoutPageContent() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Back Button */}
           <div className="mb-8">
-            <Link 
+            <Link
               href={`/exams/${courseSlug || course.slug || course.id}`}
               className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
             >
@@ -193,24 +199,36 @@ function CheckoutPageContent() {
             <div>
               <Card className="shadow-xl border-0 overflow-hidden">
                 <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                  <CardTitle className="text-2xl">Upgrade to Premium</CardTitle>
-                  <p className="text-blue-100">Unlock all course content and features</p>
+                  <CardTitle className="text-2xl cursor-pointer">
+                    Upgrade to Premium
+                  </CardTitle>
+                  <p className="text-blue-100">
+                    Unlock all course content and features
+                  </p>
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="mb-6">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">{course.title}</h3>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      {course.title}
+                    </h3>
                     <p className="text-gray-600">{course.description}</p>
                   </div>
 
                   {/* Course Stats */}
                   <div className="grid grid-cols-2 gap-4 mb-6">
                     <div className="bg-blue-50 rounded-lg p-4">
-                      <div className="text-2xl font-bold text-blue-600">{course.modules?.length || 0}</div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {course.modules?.length || 0}
+                      </div>
                       <div className="text-sm text-gray-600">Modules</div>
                     </div>
                     <div className="bg-purple-50 rounded-lg p-4">
-                      <div className="text-2xl font-bold text-purple-600">∞</div>
-                      <div className="text-sm text-gray-600">Lifetime Access</div>
+                      <div className="text-2xl font-bold text-purple-600">
+                        ∞
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Lifetime Access
+                      </div>
                     </div>
                   </div>
 
@@ -223,19 +241,27 @@ function CheckoutPageContent() {
                     <ul className="space-y-2">
                       <li className="flex items-center gap-3">
                         <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span className="text-gray-700">Access to all premium modules</span>
+                        <span className="text-gray-700">
+                          Access to all premium modules
+                        </span>
                       </li>
                       <li className="flex items-center gap-3">
                         <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span className="text-gray-700">Advanced practice questions</span>
+                        <span className="text-gray-700">
+                          Advanced practice questions
+                        </span>
                       </li>
                       <li className="flex items-center gap-3">
                         <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span className="text-gray-700">Detailed solutions and explanations</span>
+                        <span className="text-gray-700">
+                          Detailed solutions and explanations
+                        </span>
                       </li>
                       <li className="flex items-center gap-3">
                         <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span className="text-gray-700">Progress tracking and analytics</span>
+                        <span className="text-gray-700">
+                          Progress tracking and analytics
+                        </span>
                       </li>
                       <li className="flex items-center gap-3">
                         <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
@@ -243,7 +269,9 @@ function CheckoutPageContent() {
                       </li>
                       <li className="flex items-center gap-3">
                         <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        <span className="text-gray-700">Lifetime access to updates</span>
+                        <span className="text-gray-700">
+                          Lifetime access to updates
+                        </span>
                       </li>
                     </ul>
                   </div>
@@ -255,27 +283,37 @@ function CheckoutPageContent() {
             <div>
               <Card className="shadow-xl border-0 overflow-hidden">
                 <CardHeader className="bg-white border-b">
-                  <CardTitle className="text-xl text-gray-900">Complete Your Purchase</CardTitle>
+                  <CardTitle className="text-xl text-gray-900">
+                    Complete Your Purchase
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
                   {/* Pricing */}
                   <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg p-6 mb-6">
                     <div className="text-center">
-                      <div className="text-sm opacity-90 mb-1">Total Amount</div>
+                      <div className="text-sm opacity-90 mb-1">
+                        Total Amount
+                      </div>
                       <div className="flex items-center justify-center gap-3 mb-2">
-                        <span className="text-lg opacity-75 line-through">₹999</span>
+                        <span className="text-lg opacity-75 line-through">
+                          ₹999
+                        </span>
                         <div className="text-4xl font-bold">₹499</div>
                         <div className="bg-red-500 text-white px-2 py-1 rounded-lg text-sm font-bold">
                           50% OFF
                         </div>
                       </div>
-                      <div className="text-sm opacity-90">One-time payment • No recurring charges</div>
+                      <div className="text-sm opacity-90">
+                        One-time payment • No recurring charges
+                      </div>
                     </div>
                   </div>
 
                   {/* Payment Methods */}
                   <div className="mb-6">
-                    <h4 className="font-semibold text-gray-900 mb-3">Accepted Payment Methods:</h4>
+                    <h4 className="font-semibold text-gray-900 mb-3">
+                      Accepted Payment Methods:
+                    </h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex items-center gap-2 p-3 border rounded-lg">
                         <Smartphone className="h-5 w-5 text-blue-600" />
@@ -325,16 +363,18 @@ function CheckoutPageContent() {
 
 export default function CheckoutPage() {
   return (
-    <Suspense fallback={
-      <PageLayout>
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading checkout...</p>
+    <Suspense
+      fallback={
+        <PageLayout>
+          <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading checkout...</p>
+            </div>
           </div>
-        </div>
-      </PageLayout>
-    }>
+        </PageLayout>
+      }
+    >
       <CheckoutPageContent />
     </Suspense>
   );
