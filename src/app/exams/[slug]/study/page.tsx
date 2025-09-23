@@ -6,7 +6,7 @@ import PageLayout from "@/components/layout/PageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Lock, AlertCircle } from "lucide-react";
+import { Lock, AlertCircle, ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import LockedModuleContent from "@/components/LockedModuleContent";
 import QuizTimer from "@/components/QuizTimer";
@@ -40,6 +40,7 @@ export default function StudyPage() {
   const [quizStartTime, setQuizStartTime] = useState<Date | null>(null);
   const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({});
   const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function fetchCourseAndAccess() {
@@ -120,6 +121,29 @@ export default function StudyPage() {
       }
     }
   }, [userAccess, course, currentModuleIdx, accessLoading]);
+
+  // Initialize expanded modules - expand the current module by default
+  useEffect(() => {
+    if (course && course.modules && course.modules.length > 0) {
+      const currentModuleId = course.modules[currentModuleIdx]?.id;
+      if (currentModuleId) {
+        setExpandedModules(new Set([currentModuleId]));
+      }
+    }
+  }, [course, currentModuleIdx]);
+
+  // Toggle module expansion
+  const toggleModuleExpansion = (moduleId: string) => {
+    setExpandedModules(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(moduleId)) {
+        newSet.delete(moduleId);
+      } else {
+        newSet.add(moduleId);
+      }
+      return newSet;
+    });
+  };
 
   // Check if user has access to current module
   const hasModuleAccess = (moduleIndex: number) => {
@@ -445,6 +469,12 @@ export default function StudyPage() {
       return;
     }
 
+    // Expand the target module if it's not already expanded
+    const targetModuleId = modules[modIdx]?.id;
+    if (targetModuleId && !expandedModules.has(targetModuleId)) {
+      setExpandedModules(prev => new Set([...prev, targetModuleId]));
+    }
+
     // Reset quiz state when switching lessons
     setIsTimerActive(false);
     setQuizStartTime(null);
@@ -471,6 +501,11 @@ export default function StudyPage() {
       // Check if next module is accessible
       const nextModuleIdx = currentModuleIdx + 1;
       if (hasModuleAccess(nextModuleIdx)) {
+        // Expand the next module
+        const nextModuleId = modules[nextModuleIdx]?.id;
+        if (nextModuleId && !expandedModules.has(nextModuleId)) {
+          setExpandedModules(prev => new Set([...prev, nextModuleId]));
+        }
         setCurrentModuleIdx(nextModuleIdx);
         setCurrentLessonIdx(0);
       } else {
@@ -500,6 +535,11 @@ export default function StudyPage() {
       // Check if previous module is accessible
       const prevModuleIdx = currentModuleIdx - 1;
       if (hasModuleAccess(prevModuleIdx)) {
+        // Expand the previous module
+        const prevModuleId = modules[prevModuleIdx]?.id;
+        if (prevModuleId && !expandedModules.has(prevModuleId)) {
+          setExpandedModules(prev => new Set([...prev, prevModuleId]));
+        }
         const prevLessons = getLessons(modules[prevModuleIdx]);
         setCurrentModuleIdx(prevModuleIdx);
         setCurrentLessonIdx(prevLessons.length - 1);
@@ -535,6 +575,7 @@ export default function StudyPage() {
             {modules.map((mod: any, mIdx: number) => {
               const moduleHasAccess = hasModuleAccess(mIdx);
               const isLocked = !moduleHasAccess;
+              const isExpanded = expandedModules.has(mod.id);
 
               return (
                 <li key={mod.id} className="relative">
@@ -542,17 +583,18 @@ export default function StudyPage() {
                     <div className="absolute -top-3 left-3 w-0.5 h-3 bg-gray-200"></div>
                   )}
                   <div className="relative">
-                    <div
-                      className={`font-semibold mb-3 pl-6 flex items-center gap-2 ${
+                    <button
+                      onClick={() => toggleModuleExpansion(mod.id)}
+                      className={`w-full font-semibold mb-3 pl-6 pr-2 py-2 flex items-center gap-2 rounded-lg transition-all duration-200 hover:bg-blue-50 ${
                         mIdx === currentModuleIdx
-                          ? "text-blue-600"
+                          ? "text-blue-600 bg-blue-50"
                           : isLocked
                           ? "text-gray-400"
-                          : "text-gray-800"
+                          : "text-gray-800 hover:text-blue-700"
                       }`}
                     >
                       <div
-                        className={`absolute left-0 top-1.5 w-3 h-3 rounded-full ${
+                        className={`absolute left-0 top-3 w-3 h-3 rounded-full ${
                           isLocked
                             ? "bg-gray-300"
                             : mIdx < currentModuleIdx
@@ -562,15 +604,23 @@ export default function StudyPage() {
                             : "bg-gray-300"
                         }`}
                       ></div>
-                      <span className="flex-1">{mod.title}</span>
-                      {isLocked && <Lock className="h-4 w-4 text-gray-400" />}
-                      {mod.isFree && (
-                        <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">
-                          Free
-                        </span>
-                      )}
-                    </div>
-                    <ul className="ml-6 space-y-2">
+                      <span className="flex-1 text-left">{mod.title}</span>
+                      <div className="flex items-center gap-2">
+                        {isLocked && <Lock className="h-4 w-4 text-gray-400" />}
+                        {mod.isFree && (
+                          <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">
+                            Free
+                          </span>
+                        )}
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 transition-transform duration-200" />
+                        )}
+                      </div>
+                    </button>
+                    {isExpanded && (
+                      <ul className="ml-6 space-y-2 animate-in slide-in-from-top-2 duration-200">
                       {getLessons(mod).map((les: any, lIdx: number) => (
                         <li key={les.id}>
                           <button
@@ -764,7 +814,8 @@ export default function StudyPage() {
                           </button>
                         </li>
                       ))}
-                    </ul>
+                      </ul>
+                    )}
                   </div>
                 </li>
               );
