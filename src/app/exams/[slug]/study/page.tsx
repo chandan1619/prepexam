@@ -495,54 +495,87 @@ export default function StudyPage() {
                                 : mIdx === currentModuleIdx && lIdx === currentLessonIdx
                                 ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
                                 : "hover:bg-blue-50 text-gray-700 hover:text-blue-700"
-                            } flex items-center gap-2`}
+                            } flex items-center gap-3`}
                             onClick={() => goToLesson(mIdx, lIdx)}
                             disabled={isLocked}
                           >
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${
                               isLocked
                                 ? "bg-gray-200 text-gray-400"
                                 : mIdx === currentModuleIdx && lIdx === currentLessonIdx
                                 ? "bg-white/20 text-white"
-                                : "bg-blue-50 text-blue-600"
+                                : les.type === "blogPost"
+                                ? "bg-gradient-to-br from-green-100 to-emerald-100 text-green-600 border border-green-200"
+                                : les.type === "question"
+                                ? "bg-gradient-to-br from-orange-100 to-amber-100 text-orange-600 border border-orange-200"
+                                : les.type === "quiz" && (les as any).quizType === "PRACTICE"
+                                ? "bg-gradient-to-br from-purple-100 to-violet-100 text-purple-600 border border-purple-200"
+                                : les.type === "quiz"
+                                ? "bg-gradient-to-br from-red-100 to-rose-100 text-red-600 border border-red-200"
+                                : les.type === "pyq"
+                                ? "bg-gradient-to-br from-blue-100 to-cyan-100 text-blue-600 border border-blue-200"
+                                : "bg-gray-100 text-gray-600"
                             }`}>
                               {isLocked ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                 </svg>
                               ) : les.type === "blogPost" ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                 </svg>
                               ) : les.type === "question" ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                               ) : les.type === "quiz" && (les as any).quizType === "PRACTICE" ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                                 </svg>
                               ) : les.type === "quiz" ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                               ) : les.type === "pyq" ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                               ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                               )}
                             </div>
-                            <span className="line-clamp-1">
-                              {les.title || (les.question ?
-                                <div dangerouslySetInnerHTML={{
-                                  __html: les.question.replace(/^<p>|<\/p>$/g, '')
-                                }} /> :
-                                les.year || "Lesson")}
-                            </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  les.type === "blogPost"
+                                    ? "bg-green-100 text-green-700"
+                                    : les.type === "question"
+                                    ? "bg-orange-100 text-orange-700"
+                                    : les.type === "quiz" && (les as any).quizType === "PRACTICE"
+                                    ? "bg-purple-100 text-purple-700"
+                                    : les.type === "quiz"
+                                    ? "bg-red-100 text-red-700"
+                                    : les.type === "pyq"
+                                    ? "bg-blue-100 text-blue-700"
+                                    : "bg-gray-100 text-gray-700"
+                                }`}>
+                                  {les.type === "blogPost" && "📖 Topic"}
+                                  {les.type === "question" && "❓ Practice"}
+                                  {les.type === "quiz" && (les as any).quizType === "PRACTICE" && "🧪 Practice Test"}
+                                  {les.type === "quiz" && (les as any).quizType !== "PRACTICE" && "📝 Quiz"}
+                                  {les.type === "pyq" && "📅 PYQ"}
+                                </span>
+                              </div>
+                              <span className="line-clamp-2 text-sm leading-tight">
+                                {les.title || (les.question ?
+                                  <div dangerouslySetInnerHTML={{
+                                    __html: les.question.replace(/^<p>|<\/p>$/g, '')
+                                  }} /> :
+                                  les.year ? `Previous Year ${les.year}` : "Lesson")}
+                              </span>
+                            </div>
                           </button>
                         </li>
                       ))}

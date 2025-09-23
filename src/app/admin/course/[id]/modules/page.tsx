@@ -544,12 +544,10 @@ export default function CourseModulesPage() {
             </div>
 
             <div className="flex gap-3">
-              <Link href={`/admin/course/${id}/content`}>
-                <Button variant="outline">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Manage Content
-                </Button>
-              </Link>
+              <Button variant="outline" disabled>
+                <FileText className="h-4 w-4 mr-2" />
+                Manage Content (Select Module)
+              </Button>
               {course && course.modules.length > 1 && !isReordering && (
                 <Button
                   variant="outline"
@@ -840,8 +838,8 @@ export default function CourseModulesPage() {
                           </Link>
                           <Link href={`/admin/module/${module.id}/content`}>
                             <Button variant="outline" size="sm">
-                              <FileText className="h-4 w-4 mr-2" />
-                              Manage Content
+                              <ArrowUpDown className="h-4 w-4 mr-2" />
+                              Order Content
                             </Button>
                           </Link>
                           <Button
@@ -944,12 +942,10 @@ export default function CourseModulesPage() {
               <Button variant="outline">← Back to Courses</Button>
             </Link>
 
-            <Link href={`/admin/course/${id}/content`}>
-              <Button>
-                <FileText className="h-4 w-4 mr-2" />
-                Manage Course Content
-              </Button>
-            </Link>
+            <Button variant="outline" disabled>
+              <FileText className="h-4 w-4 mr-2" />
+              Select a module to manage content
+            </Button>
           </div>
 
           {/* Messages */}
