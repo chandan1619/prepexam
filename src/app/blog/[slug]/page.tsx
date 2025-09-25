@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
-import { ArrowLeft, Calendar, BookOpen, Clock, Share2 } from "lucide-react";
+import { ArrowLeft, Calendar, BookOpen, Clock, Share2, ArrowRight } from "lucide-react";
 import BlogComments from "@/components/BlogComments";
 import "@/styles/rich-text.css";
 
@@ -23,11 +23,34 @@ interface BlogPost {
   };
 }
 
+interface RelatedPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  createdAt: string;
+  module: {
+    title: string;
+  };
+  isFromSameModule: boolean;
+}
+
+interface RelatedPostsResponse {
+  relatedPosts: RelatedPost[];
+  moduleInfo: {
+    title: string;
+    examTitle: string;
+    examSlug: string;
+  };
+}
+
 export default function BlogPostPage() {
   const params = useParams();
   const [blog, setBlog] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [relatedPosts, setRelatedPosts] = useState<RelatedPost[]>([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
 
   useEffect(() => {
     const fetchBlog = async () => {
@@ -50,6 +73,28 @@ export default function BlogPostPage() {
       fetchBlog();
     }
   }, [params.slug]);
+
+  // Fetch related posts after blog is loaded
+  useEffect(() => {
+    const fetchRelatedPosts = async () => {
+      if (!blog) return;
+      
+      setRelatedLoading(true);
+      try {
+        const response = await fetch(`/api/blog/related/${params.slug}`);
+        if (response.ok) {
+          const data: RelatedPostsResponse = await response.json();
+          setRelatedPosts(data.relatedPosts);
+        }
+      } catch (error) {
+        console.error("Failed to fetch related posts:", error);
+      } finally {
+        setRelatedLoading(false);
+      }
+    };
+
+    fetchRelatedPosts();
+  }, [blog, params.slug]);
 
   if (loading) {
     return (
@@ -202,7 +247,9 @@ export default function BlogPostPage() {
               <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
                 Continue Your Learning Journey
               </h3>
-              <div className="grid md:grid-cols-2 gap-4">
+              
+              {/* Course Navigation */}
+              <div className="grid md:grid-cols-2 gap-4 mb-8">
                 <Link
                   href={`/exams/${blog.module.exam.slug}`}
                   className="group flex items-center p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all duration-200 bg-gradient-to-r from-blue-50/50 to-blue-100/30"
@@ -221,7 +268,7 @@ export default function BlogPostPage() {
                 </Link>
                 
                 <Link
-                  href={`/exams/${blog.module.exam.slug}/modules`}
+                  href="/blog"
                   className="group flex items-center p-4 border border-gray-200 rounded-xl hover:border-purple-300 hover:shadow-md transition-all duration-200 bg-gradient-to-r from-purple-50/50 to-purple-100/30"
                 >
                   <div className="bg-purple-500 text-white p-2.5 rounded-lg mr-4 group-hover:scale-105 transition-transform">
@@ -229,14 +276,79 @@ export default function BlogPostPage() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors mb-1">
-                      More from {blog.module.title}
+                      All Articles
                     </h4>
                     <p className="text-gray-600 text-sm">
-                      Additional resources from this module
+                      Browse all study articles and insights
                     </p>
                   </div>
                 </Link>
               </div>
+
+              {/* Related Articles */}
+              {relatedLoading ? (
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Related Articles</h4>
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="flex items-center p-4 border border-gray-200 rounded-xl">
+                        <div className="h-12 w-12 bg-gray-200 rounded-lg mr-4"></div>
+                        <div className="flex-1">
+                          <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                          <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : relatedPosts.length > 0 ? (
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                    More from {blog.module.title}
+                  </h4>
+                  <div className="grid gap-4">
+                    {relatedPosts.map((post) => (
+                      <Link
+                        key={post.id}
+                        href={`/blog/${post.slug}`}
+                        className="group flex items-center p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all duration-200 bg-gradient-to-r from-gray-50/50 to-blue-50/30"
+                      >
+                        <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-2.5 rounded-lg mr-4 group-hover:scale-105 transition-transform">
+                          <BookOpen className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1">
+                          <h5 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors mb-1 line-clamp-1">
+                            {post.title}
+                          </h5>
+                          {post.excerpt && (
+                            <p className="text-gray-600 text-sm line-clamp-2 mb-2">
+                              {post.excerpt}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center text-xs text-gray-500">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              {new Date(post.createdAt).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                              })}
+                              {!post.isFromSameModule && (
+                                <>
+                                  <span className="mx-2">•</span>
+                                  <span className="text-purple-600 font-medium">
+                                    {post.module.title}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-blue-500 group-hover:translate-x-1 transition-transform" />
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
 
