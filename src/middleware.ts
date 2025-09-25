@@ -42,6 +42,10 @@ const isPublicRoute = createRouteMatcher([
   "/api/blog/slug/(.*)",
   "/api/courses",
   "/api/course/(.*)",
+  // Clerk OAuth callback routes - CRITICAL for external OAuth providers
+  "/api/auth/callback/(.*)",
+  "/sso-callback",
+  "/api/auth/(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
