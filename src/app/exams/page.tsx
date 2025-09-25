@@ -3,7 +3,8 @@
 import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
 import { useEffect, useState } from "react";
-import { fetchWithCache, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
+import { fetchWithCache, CACHE_KEYS, CACHE_TTL, clearUserCache } from "@/lib/cache";
+import { useUser } from "@clerk/nextjs";
 
 export default function ExamsPage() {
   type Course = {
@@ -19,7 +20,11 @@ export default function ExamsPage() {
   };
 
   const [courses, setCourses] = useState<Course[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
   const [, setLoading] = useState(true);
+  const { user, isLoaded } = useUser();
 
   useEffect(() => {
     async function fetchCourses() {
@@ -31,14 +36,59 @@ export default function ExamsPage() {
           CACHE_TTL.COURSES
         );
         setCourses(data);
+        setFilteredCourses(data);
       } catch (error) {
         console.error("Error fetching courses:", error);
       } finally {
         setLoading(false);
       }
     }
-    fetchCourses();
-  }, []);
+    
+    // Only fetch courses when Clerk has finished loading
+    if (isLoaded) {
+      fetchCourses();
+    }
+  }, [isLoaded]);
+
+  // Clear cache when user authentication state changes
+  useEffect(() => {
+    if (isLoaded) {
+      // Clear cache when user signs in/out to ensure fresh data
+      clearUserCache();
+    }
+  }, [user?.id, isLoaded]);
+
+  // Filter courses based on category and search query
+  useEffect(() => {
+    let filtered = courses;
+
+    // Filter by category
+    if (selectedCategory !== "All") {
+      filtered = filtered.filter(course =>
+        course.category?.toLowerCase() === selectedCategory.toLowerCase()
+      );
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(course =>
+        course.title.toLowerCase().includes(query) ||
+        course.description.toLowerCase().includes(query) ||
+        course.category?.toLowerCase().includes(query)
+      );
+    }
+
+    setFilteredCourses(filtered);
+  }, [courses, selectedCategory, searchQuery]);
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
 
   const categories = ["All", "SSC", "UPSC", "Banking", "Railway", "Teaching"];
 
@@ -60,6 +110,8 @@ export default function ExamsPage() {
                 <input
                   type="text"
                   placeholder="Search for exams, courses, or topics..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
                   className="w-full px-6 py-4 bg-white rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -74,8 +126,9 @@ export default function ExamsPage() {
               {categories.map((category) => (
                 <button
                   key={category}
+                  onClick={() => handleCategoryChange(category)}
                   className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
-                    category === "All"
+                    category === selectedCategory
                       ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
                       : "bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600"
                   }`}
@@ -88,30 +141,35 @@ export default function ExamsPage() {
 
           {/* Exams Grid */}
           <div className={`grid gap-6 ${
-            courses.length === 1
+            filteredCourses.length === 1
               ? 'justify-center'
-              : courses.length === 2
+              : filteredCourses.length === 2
                 ? 'md:grid-cols-2 justify-center max-w-4xl mx-auto'
                 : 'md:grid-cols-2 lg:grid-cols-3'
           }`}>
-            {courses.length === 0 ? (
+            {filteredCourses.length === 0 ? (
               <div className="col-span-full text-center py-12">
                 <div className="bg-white rounded-2xl p-8 max-w-md mx-auto">
-                  <div className="text-6xl mb-4">📚</div>
+                  <div className="text-6xl mb-4">
+                    {courses.length === 0 ? "📚" : "🔍"}
+                  </div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    No Courses Available
+                    {courses.length === 0 ? "No Courses Available" : "No Results Found"}
                   </h3>
                   <p className="text-gray-600">
-                    Check back soon for new courses!
+                    {courses.length === 0
+                      ? "Check back soon for new courses!"
+                      : "Try adjusting your search or filter criteria."
+                    }
                   </p>
                 </div>
               </div>
             ) : (
-              courses.map((course) => (
+              filteredCourses.map((course) => (
                 <div
                   key={course.id}
                   className={`group bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl hover:border-blue-200 transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] ${
-                    courses.length === 1 ? 'max-w-md w-full' : ''
+                    filteredCourses.length === 1 ? 'max-w-md w-full' : ''
                   }`}
                 >
                   {course.imageUrl ? (

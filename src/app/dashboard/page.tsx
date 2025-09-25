@@ -3,17 +3,17 @@ import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import PageLayout from "@/components/layout/PageLayout";
 import { useEffect, useState } from "react";
-import { 
-  BookOpen, 
-  Clock, 
-  Trophy, 
-  Target, 
-  TrendingUp, 
+import {
+  BookOpen,
+  Clock,
+  Trophy,
+  Target,
+  TrendingUp,
   Calendar,
   ArrowRight,
   Star,
   CheckCircle,
-  PlayCircle
+  PlayCircle,
 } from "lucide-react";
 
 interface EnrolledCourse {
@@ -44,7 +44,7 @@ export default function DashboardPage() {
     completedModules: 0,
     totalModules: 0,
     averageScore: 0,
-    studyStreak: 0
+    studyStreak: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,35 +55,41 @@ export default function DashboardPage() {
       setError(null);
       try {
         console.log("Fetching enrollment data for user:", user?.id);
-        
+
         // Fetch enrollments
         const enrollmentRes = await fetch("/api/enrollment");
         const enrollmentData = await enrollmentRes.json();
-        
+
         console.log("Enrollment response:", {
           ok: enrollmentRes.ok,
           status: enrollmentRes.status,
-          data: enrollmentData
+          data: enrollmentData,
         });
-        
+
         if (enrollmentRes.ok) {
           setEnrolledCourses(enrollmentData);
-          
+
           // Calculate progress from real data
           const totalCourses = enrollmentData.length;
-          const totalModules = enrollmentData.reduce((sum: number, course: EnrolledCourse) =>
-            sum + course.exam.modules.length, 0
+          const totalModules = enrollmentData.reduce(
+            (sum: number, course: EnrolledCourse) =>
+              sum + course.exam.modules.length,
+            0
           );
-          
-          setUserProgress(prev => ({
+
+          setUserProgress((prev) => ({
             ...prev,
             totalCourses,
             totalModules,
             completedModules: Math.floor(totalModules * 0.3), // Placeholder calculation
-            studyStreak: 5 // Placeholder
+            studyStreak: 5, // Placeholder
           }));
         } else {
-          setError(`Failed to fetch enrollments: ${enrollmentData.error || 'Unknown error'}`);
+          setError(
+            `Failed to fetch enrollments: ${
+              enrollmentData.error || "Unknown error"
+            }`
+          );
         }
 
         // Fetch user progress if API exists
@@ -91,15 +97,18 @@ export default function DashboardPage() {
           const progressRes = await fetch("/api/user/progress");
           if (progressRes.ok) {
             const progressData = await progressRes.json();
-            setUserProgress(prev => ({ ...prev, ...progressData }));
+            setUserProgress((prev) => ({ ...prev, ...progressData }));
           }
         } catch (err) {
           console.log("Progress API not available, using calculated data");
         }
-
       } catch (error) {
         console.error("Failed to fetch user data:", error);
-        setError(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        setError(
+          `Network error: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
       }
       setLoading(false);
     }
@@ -148,7 +157,9 @@ export default function DashboardPage() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-              <h3 className="text-red-800 font-semibold mb-2">Error Loading Dashboard</h3>
+              <h3 className="text-red-800 font-semibold mb-2">
+                Error Loading Dashboard
+              </h3>
               <p className="text-red-600 mb-4">{error}</p>
               <button
                 onClick={() => window.location.reload()}
@@ -163,9 +174,12 @@ export default function DashboardPage() {
     );
   }
 
-  const progressPercentage = userProgress.totalModules > 0
-    ? Math.round((userProgress.completedModules / userProgress.totalModules) * 100)
-    : 0;
+  const progressPercentage =
+    userProgress.totalModules > 0
+      ? Math.round(
+          (userProgress.completedModules / userProgress.totalModules) * 100
+        )
+      : 0;
 
   return (
     <PageLayout>
@@ -184,7 +198,9 @@ export default function DashboardPage() {
               </div>
               <div className="hidden md:flex items-center gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{userProgress.studyStreak}</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {userProgress.studyStreak}
+                  </div>
                   <div className="text-sm text-gray-500">Day Streak 🔥</div>
                 </div>
               </div>
@@ -201,7 +217,9 @@ export default function DashboardPage() {
                   <BookOpen className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 font-medium">Enrolled Courses</p>
+                  <p className="text-sm text-gray-600 font-medium">
+                    Enrolled Courses
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">
                     {userProgress.totalCourses}
                   </p>
@@ -216,7 +234,9 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 font-medium">Progress</p>
-                  <p className="text-2xl font-bold text-gray-900">{progressPercentage}%</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {progressPercentage}%
+                  </p>
                 </div>
               </div>
             </div>
@@ -241,8 +261,12 @@ export default function DashboardPage() {
                   <Trophy className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 font-medium">Study Streak</p>
-                  <p className="text-2xl font-bold text-gray-900">{userProgress.studyStreak} days</p>
+                  <p className="text-sm text-gray-600 font-medium">
+                    Study Streak
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {userProgress.studyStreak} days
+                  </p>
                 </div>
               </div>
             </div>
@@ -275,7 +299,7 @@ export default function DashboardPage() {
                       Enroll in courses designed for PGT STET & BPSE TRE 4 exams
                     </p>
                     <Link href="/exams">
-                      <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200">
+                      <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 cursor-pointer">
                         Explore Courses
                       </button>
                     </Link>
@@ -283,7 +307,10 @@ export default function DashboardPage() {
                 ) : (
                   <div className="space-y-4">
                     {enrolledCourses.map((enrollment) => (
-                      <div key={enrollment.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all duration-200 bg-gradient-to-r from-blue-50/50 to-purple-50/50">
+                      <div
+                        key={enrollment.id}
+                        className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all duration-200 bg-gradient-to-r from-blue-50/50 to-purple-50/50"
+                      >
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center">
                             <div className="p-2 rounded-lg bg-blue-100 text-blue-600 mr-4">
@@ -294,7 +321,10 @@ export default function DashboardPage() {
                                 {enrollment.exam.title}
                               </h3>
                               <p className="text-sm text-gray-500">
-                                Enrolled on {new Date(enrollment.createdAt).toLocaleDateString()}
+                                Enrolled on{" "}
+                                {new Date(
+                                  enrollment.createdAt
+                                ).toLocaleDateString()}
                               </p>
                             </div>
                           </div>
@@ -307,13 +337,17 @@ export default function DashboardPage() {
                             )}
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center justify-between">
                           <div className="flex items-center text-sm text-gray-600">
                             <Calendar className="h-4 w-4 mr-1" />
                             {enrollment.exam.modules.length} modules available
                           </div>
-                          <Link href={`/exams/${enrollment.exam.slug || enrollment.exam.id}/study`}>
+                          <Link
+                            href={`/exams/${
+                              enrollment.exam.slug || enrollment.exam.id
+                            }/study`}
+                          >
                             <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all duration-200 flex items-center gap-2">
                               <PlayCircle className="h-4 w-4" />
                               Continue Learning
@@ -343,8 +377,12 @@ export default function DashboardPage() {
                         <BookOpen className="h-5 w-5" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900">Browse Courses</h4>
-                        <p className="text-sm text-gray-600">Find new courses to enroll</p>
+                        <h4 className="font-medium text-gray-900">
+                          Browse Courses
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          Find new courses to enroll
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -357,8 +395,12 @@ export default function DashboardPage() {
                         <BookOpen className="h-5 w-5" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900">Study Articles</h4>
-                        <p className="text-sm text-gray-600">Read expert insights</p>
+                        <h4 className="font-medium text-gray-900">
+                          Study Articles
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          Read expert insights
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -371,15 +413,19 @@ export default function DashboardPage() {
                         <Trophy className="h-5 w-5" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900">Your Progress</h4>
+                        <h4 className="font-medium text-gray-900">
+                          Your Progress
+                        </h4>
                         <div className="mt-2">
                           <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
+                            <div
                               className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-300"
                               style={{ width: `${progressPercentage}%` }}
                             ></div>
                           </div>
-                          <p className="text-xs text-gray-600 mt-1">{progressPercentage}% Complete</p>
+                          <p className="text-xs text-gray-600 mt-1">
+                            {progressPercentage}% Complete
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -396,16 +442,14 @@ export default function DashboardPage() {
                 <div>
                   <h3 className="text-2xl font-bold mb-2">Keep Going! 🚀</h3>
                   <p className="text-blue-100 text-lg">
-                    You're on track to become a successful Computer Science teacher. 
-                    {progressPercentage > 50 
-                      ? " You're more than halfway there!" 
-                      : " Every step counts towards your goal!"
-                    }
+                    You're on track to become a successful Computer Science
+                    teacher.
+                    {progressPercentage > 50
+                      ? " You're more than halfway there!"
+                      : " Every step counts towards your goal!"}
                   </p>
                 </div>
-                <div className="hidden md:block text-6xl opacity-20">
-                  🎯
-                </div>
+                <div className="hidden md:block text-6xl opacity-20">🎯</div>
               </div>
             </div>
           )}

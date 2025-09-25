@@ -89,7 +89,8 @@ export const CACHE_TTL = {
 export async function fetchWithCache<T>(
   url: string,
   cacheKey: string,
-  ttl: number = CACHE_TTL.COURSES
+  ttl: number = CACHE_TTL.COURSES,
+  options?: RequestInit
 ): Promise<T> {
   // Check cache first
   const cached = clientCache.get<T>(cacheKey);
@@ -102,7 +103,7 @@ export async function fetchWithCache<T>(
   
   try {
     // Fetch fresh data
-    const response = await fetch(url);
+    const response = await fetch(url, options);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -123,4 +124,15 @@ export async function fetchWithCache<T>(
     // Otherwise, throw the error
     throw error;
   }
+}
+
+// Clear user-specific cache when authentication state changes
+export function clearUserCache() {
+  // Clear all cache entries that might be user-specific
+  clientCache.clear();
+}
+
+// Clear specific cache entries
+export function clearCacheKey(key: string) {
+  clientCache.delete(key);
 }
