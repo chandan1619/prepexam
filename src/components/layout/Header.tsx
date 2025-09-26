@@ -91,6 +91,12 @@ export default function Header() {
                 Exam Catalog
               </Link>
               <Link
+                href="/bpsc-previous-year-computer-science-question-paper"
+                className="text-gray-600 hover:text-blue-600 transition-colors font-medium"
+              >
+                BPSC Previous Year Questions
+              </Link>
+              <Link
                 href="/dashboard"
                 className="text-gray-600 hover:text-blue-600 transition-colors font-medium"
               >
