@@ -10,7 +10,12 @@ const nextConfig: NextConfig = {
   experimental: {
     // Enable static optimization
     optimizePackageImports: ['@clerk/nextjs', 'lucide-react'],
+    // Optimize CSS
+    optimizeCss: true,
   },
+  
+  // Server external packages
+  serverExternalPackages: ['@prisma/client'],
   
   // Image optimization
   images: {
@@ -65,6 +70,33 @@ const nextConfig: NextConfig = {
           {
             key: 'X-XSS-Protection',
             value: '1; mode=block',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+        ],
+      },
+      // SEO and performance headers for static assets
+      {
+        source: '/icon.svg',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/manifest.json',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400',
           },
         ],
       },

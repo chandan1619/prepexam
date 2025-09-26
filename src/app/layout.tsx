@@ -15,13 +15,26 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PrepExam - Computer Science Teacher Exam Preparation | PGT STET & BPSE TRE 4",
+  title: {
+    default: "PrepExam - Computer Science Teacher Exam Preparation | PGT STET & BPSE TRE 4",
+    template: "%s | PrepExam - CS Teacher Exam Prep"
+  },
   description: "Master Computer Science teaching exams with comprehensive study materials, previous year questions & expert guidance. Crack PGT STET and BPSE TRE 4 exams with confidence.",
-  keywords: "computer science teacher exam, PGT STET preparation, BPSE TRE 4 exam, computer science teaching jobs, CS teacher recruitment, programming concepts, data structures, algorithms, computer networks, database management, software engineering, teaching methodology",
+  keywords: "computer science teacher exam, PGT STET preparation, BPSE TRE 4 exam, computer science teaching jobs, CS teacher recruitment, programming concepts, data structures, algorithms, computer networks, database management, software engineering, teaching methodology, Bihar teacher recruitment, government job preparation",
   authors: [{ name: "PrepExam Team" }],
   creator: "PrepExam",
   publisher: "PrepExam",
-  robots: "index, follow",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: '16x16', type: 'image/x-icon' },
@@ -31,8 +44,16 @@ export const metadata: Metadata = {
       { url: '/icon.svg', sizes: '180x180', type: 'image/svg+xml' },
     ],
   },
+  manifest: '/manifest.json',
   themeColor: '#1E40AF',
-  viewport: 'width=device-width, initial-scale=1',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+  },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
+  },
   openGraph: {
     type: "website",
     locale: "en_IN",
@@ -40,12 +61,26 @@ export const metadata: Metadata = {
     title: "PrepExam - Computer Science Teacher Exam Preparation",
     description: "Master Computer Science teaching exams with comprehensive study materials. Crack PGT STET and BPSE TRE 4 exams with expert guidance.",
     siteName: "PrepExam",
+    images: [
+      {
+        url: "https://prepexam.com/icon.svg",
+        width: 1200,
+        height: 630,
+        alt: "PrepExam - Computer Science Teacher Exam Preparation",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "PrepExam - Computer Science Teacher Exam Preparation",
     description: "Master Computer Science teaching exams with comprehensive study materials. Crack PGT STET and BPSE TRE 4 exams.",
+    images: ["https://prepexam.com/icon.svg"],
+    creator: "@prepexam",
   },
+  alternates: {
+    canonical: "https://prepexam.com",
+  },
+  category: 'education',
 };
 
 export default function RootLayout({

@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+# Important pages
+Allow: /exams
+Allow: /blog
+Allow: /dashboard
+
+# Block admin and API routes from indexing
+Disallow: /admin
+Disallow: /api/
+Disallow: /sign-in
+Disallow: /sign-up
+Disallow: /payment/
+
+# Allow specific API endpoints that should be crawlable
+Allow: /api/blog/featured
+
+# Sitemap location
+Sitemap: https://prepexam.com/sitemap.xml
+
+# Crawl delay (optional, helps with server load)
+Crawl-delay: 1
