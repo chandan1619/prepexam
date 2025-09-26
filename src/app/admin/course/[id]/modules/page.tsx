@@ -355,11 +355,18 @@ export default function CourseModulesPage() {
         const data = await res.json();
         console.log("Module created successfully:", data);
         setSuccess("Module added successfully!");
+        // Update state locally instead of full refresh
+        setCourse(prevCourse => {
+          if (!prevCourse) return prevCourse;
+          return {
+            ...prevCourse,
+            modules: [...prevCourse.modules, data.module]
+          };
+        });
         setNewModuleTitle("");
         setNewModuleDescription("");
         setNewModuleIsFree(false);
         setIsAddingModule(false);
-        fetchCourse(); // Refresh the course data
       } else {
         const data = await res.json();
         console.error("Module creation failed:", data);
@@ -379,7 +386,14 @@ export default function CourseModulesPage() {
 
       if (res.ok) {
         setSuccess("Module deleted successfully!");
-        fetchCourse(); // Refresh the course data
+        // Update state locally instead of full refresh
+        setCourse(prevCourse => {
+          if (!prevCourse) return prevCourse;
+          return {
+            ...prevCourse,
+            modules: prevCourse.modules.filter(m => m.id !== moduleId)
+          };
+        });
       } else {
         const data = await res.json();
         setError(data.error || "Failed to delete module");
@@ -401,7 +415,18 @@ export default function CourseModulesPage() {
 
       if (res.ok) {
         setSuccess(`Module access changed to ${!currentIsFree ? 'Free' : 'Paid'} successfully!`);
-        fetchCourse(); // Refresh the course data
+        // Update state locally instead of full refresh
+        setCourse(prevCourse => {
+          if (!prevCourse) return prevCourse;
+          return {
+            ...prevCourse,
+            modules: prevCourse.modules.map(module =>
+              module.id === moduleId
+                ? { ...module, isFree: !currentIsFree }
+                : module
+            )
+          };
+        });
       } else {
         const data = await res.json();
         setError(data.error || "Failed to update module access");
@@ -471,7 +496,7 @@ export default function CourseModulesPage() {
       if (res.ok) {
         setSuccess("Module order saved successfully!");
         setIsReordering(false);
-        fetchCourse(); // Refresh to get the latest data
+        // No need to refresh - state is already updated
       } else {
         const data = await res.json();
         setError(data.error || "Failed to save module order");

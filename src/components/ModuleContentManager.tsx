@@ -319,7 +319,10 @@ export function ModuleContentManager({
           <CardContent>
             <QuizQuestionForm
               quizId={selectedQuiz.id}
-              onSuccess={() => window.location.reload()}
+              onSuccess={() => {
+                // Just show success message, no reload needed
+                alert("Question added successfully!");
+              }}
             />
           </CardContent>
         </Card>
@@ -571,7 +574,7 @@ export function ModuleContentManager({
                 quizType="PRACTICE"
                 onSuccess={() => {
                   setIsAddingContent(null);
-                  if (typeof window !== "undefined") window.location.reload();
+                  // No reload needed - parent will handle state update
                 }}
               />
             </CardContent>
@@ -592,7 +595,7 @@ export function ModuleContentManager({
                 quizType="ASSESSMENT"
                 onSuccess={() => {
                   setIsAddingContent(null);
-                  if (typeof window !== "undefined") window.location.reload();
+                  // No reload needed - parent will handle state update
                 }}
               />
             </CardContent>

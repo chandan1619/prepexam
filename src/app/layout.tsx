@@ -45,12 +45,6 @@ export const metadata: Metadata = {
     ],
   },
   manifest: '/manifest.json',
-  themeColor: '#1E40AF',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-  },
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION,
   },
@@ -81,6 +75,13 @@ export const metadata: Metadata = {
     canonical: "https://prepexam.com",
   },
   category: 'education',
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#1E40AF',
 };
 
 export default function RootLayout({
