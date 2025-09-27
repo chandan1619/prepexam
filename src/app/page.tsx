@@ -286,7 +286,10 @@ export default function Home() {
                 textColor: "text-green-700",
               },
             ].map((category, index) => (
-              <Link key={index} href="/bpsc-previous-year-computer-science-question-paper">
+              <Link
+                key={index}
+                href="/bpsc-previous-year-computer-science-question-paper"
+              >
                 <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden cursor-pointer">
                   <div className={`${category.bgColor} p-6 text-center`}>
                     <div className="text-4xl mb-3">{category.icon}</div>
@@ -319,16 +322,16 @@ export default function Home() {
                       ))}
                     </div>
                     <div className="flex gap-3">
-                      <Link href="/exams" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          className={`flex-1 bg-gradient-to-r ${category.color} text-white py-3 px-4 rounded-xl font-semibold transition-all duration-300 hover:shadow-lg cursor-pointer text-sm`}
-                        >
-                          Start Preparation
-                        </button>
-                      </Link>
                       <button
-                        className="bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-semibold hover:bg-gray-200 transition-colors text-sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.location.href = "/exams";
+                        }}
+                        className={`flex-1 bg-gradient-to-r ${category.color} text-white py-3 px-4 rounded-xl font-semibold transition-all duration-300 hover:shadow-lg cursor-pointer text-sm`}
                       >
+                        Start Preparation
+                      </button>
+                      <button className="bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-semibold hover:bg-gray-200 transition-colors text-sm cursor-pointer">
                         View Papers
                       </button>
                     </div>
@@ -556,8 +559,9 @@ export default function Home() {
               Practice with Real Exam Papers
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Access comprehensive collection of previous year question papers for TRE 1, TRE 2, TRE 3
-              across different classes to boost your preparation.
+              Access comprehensive collection of previous year question papers
+              for TRE 1, TRE 2, TRE 3 across different classes to boost your
+              preparation.
             </p>
           </div>
 
@@ -565,7 +569,8 @@ export default function Home() {
             {[
               {
                 title: "TRE 1 Papers",
-                description: "Complete collection of TRE 1 question papers with solutions",
+                description:
+                  "Complete collection of TRE 1 question papers with solutions",
                 icon: "📄",
                 color: "from-blue-500 to-blue-600",
                 bgColor: "bg-blue-50",
@@ -573,7 +578,8 @@ export default function Home() {
               },
               {
                 title: "TRE 2 Papers",
-                description: "Comprehensive TRE 2 question papers for thorough practice",
+                description:
+                  "Comprehensive TRE 2 question papers for thorough practice",
                 icon: "📋",
                 color: "from-green-500 to-green-600",
                 bgColor: "bg-green-50",
@@ -581,14 +587,18 @@ export default function Home() {
               },
               {
                 title: "TRE 3 Papers",
-                description: "Latest TRE 3 question papers with detailed analysis",
+                description:
+                  "Latest TRE 3 question papers with detailed analysis",
                 icon: "📊",
                 color: "from-purple-500 to-purple-600",
                 bgColor: "bg-purple-50",
                 textColor: "text-purple-700",
               },
             ].map((paper, index) => (
-              <Link key={index} href="/bpsc-previous-year-computer-science-question-paper">
+              <Link
+                key={index}
+                href="/bpsc-previous-year-computer-science-question-paper"
+              >
                 <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden cursor-pointer">
                   <div className={`${paper.bgColor} p-6 text-center`}>
                     <div className="text-4xl mb-3">{paper.icon}</div>
@@ -602,26 +612,52 @@ export default function Home() {
                     </p>
                     <div className="space-y-2 mb-6">
                       <div className="flex items-center gap-2 text-gray-600">
-                        <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <svg
+                          className="w-4 h-4 text-green-500"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                         <span>Class 9-10 Papers</span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-600">
-                        <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <svg
+                          className="w-4 h-4 text-green-500"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                         <span>Class 11-12 Papers</span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-600">
-                        <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <svg
+                          className="w-4 h-4 text-green-500"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                         <span>PDF Format</span>
                       </div>
                     </div>
                     <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-3 text-center">
-                      <span className="text-sm font-semibold text-gray-700">Click to view papers</span>
+                      <span className="text-sm font-semibold text-gray-700">
+                        Click to view papers
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -634,8 +670,18 @@ export default function Home() {
               <button className="bg-gradient-to-r from-purple-600 via-purple-700 to-pink-700 text-white px-10 py-4 rounded-2xl font-bold text-lg transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/30 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer relative overflow-hidden group">
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   View All Question Papers
-                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  <svg
+                    className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 7l5 5m0 0l-5 5m5-5H6"
+                    />
                   </svg>
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

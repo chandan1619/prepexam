@@ -1,5 +1,15 @@
 import Link from "next/link";
-import { BookOpen, Users, Award, Mail, Phone, MapPin, Linkedin, Facebook, Twitter } from "lucide-react";
+import {
+  BookOpen,
+  Users,
+  Award,
+  Mail,
+  Phone,
+  MapPin,
+  Linkedin,
+  Facebook,
+  Twitter,
+} from "lucide-react";
 
 export default function Footer() {
   return (
@@ -13,7 +23,8 @@ export default function Footer() {
               <h3 className="text-2xl font-bold">Edmission</h3>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Your trusted partner for government exam preparation. Master your exams with our comprehensive courses and expert guidance.
+              Your trusted partner for government exam preparation. Master your
+              exams with our comprehensive courses and expert guidance.
             </p>
             <div className="flex space-x-4">
               <div className="flex items-center space-x-2 text-sm text-gray-400">
@@ -32,22 +43,34 @@ export default function Footer() {
             <h4 className="text-lg font-semibold">Quick Links</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/dashboard" className="text-gray-400 hover:text-white transition-colors text-sm">
+                <Link
+                  href="/dashboard"
+                  className="text-gray-400 hover:text-white transition-colors text-sm"
+                >
                   Dashboard
                 </Link>
               </li>
               <li>
-                <Link href="/exams" className="text-gray-400 hover:text-white transition-colors text-sm">
+                <Link
+                  href="/exams"
+                  className="text-gray-400 hover:text-white transition-colors text-sm"
+                >
                   Exams
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="text-gray-400 hover:text-white transition-colors text-sm">
+                <Link
+                  href="/blog"
+                  className="text-gray-400 hover:text-white transition-colors text-sm"
+                >
                   Blog
                 </Link>
               </li>
               <li>
-                <Link href="/sign-up" className="text-gray-400 hover:text-white transition-colors text-sm">
+                <Link
+                  href="/sign-up"
+                  className="text-gray-400 hover:text-white transition-colors text-sm"
+                >
                   Get Started
                 </Link>
               </li>
@@ -73,24 +96,30 @@ export default function Footer() {
               <div className="flex items-center space-x-3">
                 <Phone className="h-4 w-4 text-blue-500 flex-shrink-0" />
                 <div className="flex flex-col space-y-1">
-                  <a href="tel:+918809586507" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  <a
+                    href="tel:+918809586507"
+                    className="text-gray-400 text-sm hover:text-white transition-colors"
+                  >
                     +91 88095 86507
                   </a>
-                  <a href="tel:+918789449507" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  <a
+                    href="tel:+918789449507"
+                    className="text-gray-400 text-sm hover:text-white transition-colors"
+                  >
                     +91 87894 49507
                   </a>
                 </div>
               </div>
               <div className="flex items-start space-x-3">
                 <MapPin className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-400 text-sm">
-                  India
-                </span>
+                <span className="text-gray-400 text-sm">India</span>
               </div>
-              
+
               {/* Social Media Links */}
               <div className="pt-2">
-                <h5 className="text-sm font-medium text-gray-300 mb-3">Connect With Us</h5>
+                <h5 className="text-sm font-medium text-gray-300 mb-3">
+                  Connect With Us
+                </h5>
                 <div className="flex space-x-4">
                   <a
                     href="https://www.linkedin.com/in/chandannitap/"
@@ -132,13 +161,22 @@ export default function Footer() {
               © {new Date().getFullYear()} Edmission. All rights reserved.
             </div>
             <div className="flex space-x-6">
-              <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors text-sm">
+              <Link
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors text-sm"
+              >
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="text-gray-400 hover:text-white transition-colors text-sm">
+              <Link
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors text-sm"
+              >
                 Terms of Service
               </Link>
-              <Link href="/support" className="text-gray-400 hover:text-white transition-colors text-sm">
+              <Link
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors text-sm"
+              >
                 Support
               </Link>
             </div>

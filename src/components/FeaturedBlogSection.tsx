@@ -26,7 +26,7 @@ export function FeaturedBlogSection() {
     const fetchBlogs = async () => {
       try {
         const data = await fetchWithCache<FeaturedBlog[]>(
-          '/api/blog/featured',
+          "/api/blog/featured",
           CACHE_KEYS.FEATURED_BLOGS,
           CACHE_TTL.FEATURED_BLOGS
         );
@@ -55,7 +55,8 @@ export function FeaturedBlogSection() {
               Expert Insights & Study Materials
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Discover in-depth articles and insights from our expert educators to boost your preparation
+              Discover in-depth articles and insights from our expert educators
+              to boost your preparation
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
@@ -92,28 +93,27 @@ export function FeaturedBlogSection() {
             Expert Insights & Study Materials
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Discover in-depth articles and insights from our expert educators to boost your preparation
+            Discover in-depth articles and insights from our expert educators to
+            boost your preparation
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
           {blogs.map((blog) => (
-            <Link
-              key={blog.id}
-              href={`/blog/${blog.slug}`}
-              className="group"
-            >
+            <Link key={blog.id} href={`/blog/${blog.slug}`} className="group">
               <article className="relative bg-gradient-to-br from-white via-blue-50/30 to-purple-50/30 rounded-3xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100/50 backdrop-blur-sm">
                 {/* Gradient overlay for visual appeal */}
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
+
                 {/* Decorative top border */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-                
+
                 <div className="relative p-8">
                   {/* Category badges with enhanced styling */}
                   <div className="flex items-center gap-2 mb-6">
                     <span className="relative py-2 px-3 text-xs font-bold bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full shadow-md hover:shadow-lg transition-shadow">
-                      <span className="relative z-10">{blog.module.exam.title}</span>
+                      <span className="relative z-10">
+                        {blog.module.exam.title}
+                      </span>
                       <div className="absolute inset-0 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     </span>
                     <span className="relative py-2 px-3 text-xs font-bold bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-full shadow-md hover:shadow-lg transition-shadow">
@@ -121,24 +121,34 @@ export function FeaturedBlogSection() {
                       <div className="absolute inset-0 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     </span>
                   </div>
-                  
+
                   {/* Enhanced title with gradient text */}
                   <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300 line-clamp-2 leading-tight">
                     {blog.title}
                   </h3>
-                  
+
                   {/* Enhanced excerpt */}
                   {blog.excerpt && (
                     <p className="text-gray-600 mb-6 line-clamp-3 leading-relaxed group-hover:text-gray-700 transition-colors">
                       {blog.excerpt}
                     </p>
                   )}
-                  
+
                   {/* Enhanced footer with better spacing and styling */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100/50">
                     <div className="flex items-center text-sm text-gray-500 group-hover:text-gray-600 transition-colors">
-                      <svg className="h-4 w-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      <svg
+                        className="h-4 w-4 mr-2 text-blue-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
                       </svg>
                       {new Date(blog.createdAt).toLocaleDateString("en-US", {
                         month: "short",
@@ -166,7 +176,7 @@ export function FeaturedBlogSection() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Subtle shine effect on hover */}
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
@@ -177,7 +187,7 @@ export function FeaturedBlogSection() {
         </div>
         <div className="text-center mt-12">
           <Link href="/blog">
-            <button className="inline-flex items-center gap-2 bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold border-2 border-blue-100 hover:border-blue-200 hover:bg-blue-50 transition-all duration-200">
+            <button className="inline-flex items-center gap-2 bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold border-2 border-blue-100 hover:border-blue-200 hover:bg-blue-50 transition-all duration-200 cursor-pointer">
               View All Articles
               <svg
                 xmlns="http://www.w3.org/2000/svg"

@@ -36,6 +36,7 @@ const isPublicRoute = createRouteMatcher([
   "/blog/(.*)",
   "/exams",
   "/exams/(.*)",
+  "/bpsc-previous-year-computer-science-question-paper",
   "/sign-in",
   "/sign-up",
   "/api/blog/featured",

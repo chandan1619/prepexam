@@ -406,6 +406,42 @@ export default function DashboardPage() {
                   </div>
                 </Link>
 
+                <Link href="/bpsc-previous-year-computer-science-question-paper">
+                  <div className="p-4 border border-gray-200 rounded-xl hover:shadow-md transition-all duration-200 cursor-pointer bg-gradient-to-r from-yellow-50/50 to-yellow-100/50 hover:from-yellow-100/50 hover:to-yellow-200/50">
+                    <div className="flex items-center">
+                      <div className="p-2 rounded-lg bg-yellow-100 text-yellow-600 mr-3">
+                        <BookOpen className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900">
+                          Previous Year Questions
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          Access past exam papers
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+
+                <a href="https://www.linkedin.com/in/chandannitap/" target="_blank" rel="noopener noreferrer">
+                  <div className="p-4 border border-gray-200 rounded-xl hover:shadow-md transition-all duration-200 cursor-pointer bg-gradient-to-r from-indigo-50/50 to-indigo-100/50 hover:from-indigo-100/50 hover:to-indigo-200/50">
+                    <div className="flex items-center">
+                      <div className="p-2 rounded-lg bg-indigo-100 text-indigo-600 mr-3">
+                        <BookOpen className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900">
+                          About Author
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          Meet the course creator
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </a>
+
                 {enrolledCourses.length > 0 && (
                   <div className="p-4 border border-gray-200 rounded-xl bg-gradient-to-r from-purple-50/50 to-purple-100/50">
                     <div className="flex items-center">
