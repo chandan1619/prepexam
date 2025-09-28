@@ -17,7 +17,7 @@ Disallow: /payment/
 Allow: /api/blog/featured
 
 # Sitemap location
-Sitemap: https://prepexam.com/sitemap.xml
+Sitemap: https://edmissions.site/sitemap.xml
 
 # Crawl delay (optional, helps with server load)
 Crawl-delay: 1

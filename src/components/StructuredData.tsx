@@ -12,68 +12,68 @@ export default function StructuredData({ type, data }: StructuredDataProps) {
         return {
           "@context": "https://schema.org",
           "@type": "Organization",
-          "name": "PrepExam",
-          "description": "Computer Science Teacher Exam Preparation Platform",
-          "url": "https://prepexam.com",
-          "logo": "https://prepexam.com/icon.svg",
-          "contactPoint": {
+          name: "Edmissions",
+          description: "Computer Science Teacher Exam Preparation Platform",
+          url: "https://edmissions.com",
+          logo: "https://edmissions.site/icon.svg",
+          contactPoint: {
             "@type": "ContactPoint",
-            "telephone": "+91-8809586507",
-            "contactType": "customer service",
-            "availableLanguage": ["English", "Hindi"]
+            telephone: "+91-8809586507",
+            contactType: "customer service",
+            availableLanguage: ["English", "Hindi"],
           },
-          "address": {
+          address: {
             "@type": "PostalAddress",
-            "addressCountry": "IN",
-            "addressRegion": "Bihar"
+            addressCountry: "IN",
+            addressRegion: "Bihar",
           },
-          "sameAs": [
-            "https://wa.me/918789449507"
-          ],
-          "areaServed": "India",
-          "serviceType": "Educational Services"
-        }
+          sameAs: ["https://wa.me/918789449507"],
+          areaServed: "India",
+          serviceType: "Educational Services",
+        };
 
       case 'website':
         return {
           "@context": "https://schema.org",
           "@type": "WebSite",
-          "name": "PrepExam - Computer Science Teacher Exam Preparation",
-          "url": "https://prepexam.com",
-          "description": "Master Computer Science teaching exams with comprehensive study materials, previous year questions & expert guidance.",
-          "potentialAction": {
+          name: "Edmissions - Computer Science Teacher Exam Preparation",
+          url: "https://edmissions.site",
+          description:
+            "Master Computer Science teaching exams with comprehensive study materials, previous year questions & expert guidance.",
+          potentialAction: {
             "@type": "SearchAction",
-            "target": "https://prepexam.com/search?q={search_term_string}",
-            "query-input": "required name=search_term_string"
+            target: "https://edmissions.site/search?q={search_term_string}",
+            "query-input": "required name=search_term_string",
           },
-          "publisher": {
+          publisher: {
             "@type": "Organization",
-            "name": "PrepExam"
-          }
-        }
+            name: "Edmissions",
+          },
+        };
 
       case 'course':
         return {
           "@context": "https://schema.org",
           "@type": "Course",
-          "name": "Computer Science Teacher Exam Preparation",
-          "description": "Comprehensive preparation for PGT STET and BPSE TRE 4 Computer Science exams",
-          "provider": {
+          name: "Computer Science Teacher Exam Preparation",
+          description:
+            "Comprehensive preparation for PGT STET and BPSE TRE 4 Computer Science exams",
+          provider: {
             "@type": "Organization",
-            "name": "PrepExam",
-            "url": "https://prepexam.com"
+            name: "Edmissions",
+            url: "https://edmissions.site",
           },
-          "educationalLevel": "Graduate",
-          "courseMode": "Online",
-          "hasCourseInstance": {
+          educationalLevel: "Graduate",
+          courseMode: "Online",
+          hasCourseInstance: {
             "@type": "CourseInstance",
-            "courseMode": "Online",
-            "instructor": {
+            courseMode: "Online",
+            instructor: {
               "@type": "Person",
-              "name": "PrepExam Team"
-            }
+              name: "Edmissions Team",
+            },
           },
-          "about": [
+          about: [
             "Computer Science",
             "Teaching Methodology",
             "Programming Concepts",
@@ -81,15 +81,15 @@ export default function StructuredData({ type, data }: StructuredDataProps) {
             "Algorithms",
             "Database Management",
             "Computer Networks",
-            "Software Engineering"
+            "Software Engineering",
           ],
-          "teaches": [
+          teaches: [
             "PGT STET Computer Science",
             "BPSE TRE 4 Computer Science",
             "Programming Fundamentals",
-            "Teaching Strategies"
-          ]
-        }
+            "Teaching Strategies",
+          ],
+        };
 
       case 'faq':
         return {

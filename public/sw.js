@@ -1,6 +1,6 @@
 // Service Worker for enhanced caching
-const CACHE_NAME = 'prepexam-v1';
-const API_CACHE_NAME = 'prepexam-api-v1';
+const CACHE_NAME = 'edmissions-v1';
+const API_CACHE_NAME = 'edmissions-api-v1';
 
 // Cache strategies
 const CACHE_STRATEGIES = {
