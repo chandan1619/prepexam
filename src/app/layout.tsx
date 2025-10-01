@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     siteName: "Edmissions",
     images: [
       {
-        url: "https://edmissions.com/icon.svg",
+        url: "https://edmissions.site/icon.svg",
         width: 1200,
         height: 630,
         alt: "Edmissions - Computer Science Teacher Exam Preparation",
@@ -71,11 +71,11 @@ export const metadata: Metadata = {
     title: "Edmissions - Computer Science Teacher Exam Preparation",
     description:
       "Master Computer Science teaching exams with comprehensive study materials. Crack PGT STET and BPSE TRE 4 exams.",
-    images: ["https://edmissions.com/icon.svg"],
+    images: ["https://edmissions.site/icon.svg"],
     creator: "@edmissions",
   },
   alternates: {
-    canonical: "https://edmissions.com",
+    canonical: "https://edmissions.site",
   },
   category: "education",
 };

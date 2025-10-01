@@ -431,7 +431,7 @@ export default function PreviousYearQuestions() {
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => handleViewPaper(paper)}
-                        className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-200 flex items-center justify-center gap-2"
+                        className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <svg
                           className="w-4 h-4"

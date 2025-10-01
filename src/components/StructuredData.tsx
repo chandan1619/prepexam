@@ -1,14 +1,14 @@
-import Script from 'next/script'
+import Script from "next/script";
 
 interface StructuredDataProps {
-  type: 'organization' | 'course' | 'faq' | 'website'
-  data?: any
+  type: "organization" | "course" | "faq" | "website";
+  data?: any;
 }
 
 export default function StructuredData({ type, data }: StructuredDataProps) {
   const getStructuredData = () => {
     switch (type) {
-      case 'organization':
+      case "organization":
         return {
           "@context": "https://schema.org",
           "@type": "Organization",
@@ -32,7 +32,7 @@ export default function StructuredData({ type, data }: StructuredDataProps) {
           serviceType: "Educational Services",
         };
 
-      case 'website':
+      case "website":
         return {
           "@context": "https://schema.org",
           "@type": "WebSite",
@@ -51,7 +51,7 @@ export default function StructuredData({ type, data }: StructuredDataProps) {
           },
         };
 
-      case 'course':
+      case "course":
         return {
           "@context": "https://schema.org",
           "@type": "Course",
@@ -91,58 +91,58 @@ export default function StructuredData({ type, data }: StructuredDataProps) {
           ],
         };
 
-      case 'faq':
+      case "faq":
         return {
           "@context": "https://schema.org",
           "@type": "FAQPage",
-          "mainEntity": [
+          mainEntity: [
             {
               "@type": "Question",
-              "name": "Which exams does this course cover?",
-              "acceptedAnswer": {
+              name: "Which exams does this course cover?",
+              acceptedAnswer: {
                 "@type": "Answer",
-                "text": "This course is designed for BPSC TRE 4.0 (Computer Science) and Bihar STET (Computer Science) exams, covering the complete latest syllabus."
-              }
+                text: "This course is designed for BPSC TRE 4.0 (Computer Science) and Bihar STET (Computer Science) exams, covering the complete latest syllabus.",
+              },
             },
             {
               "@type": "Question",
-              "name": "What do I get in this course?",
-              "acceptedAnswer": {
+              name: "What do I get in this course?",
+              acceptedAnswer: {
                 "@type": "Answer",
-                "text": "You get written notes, topic-wise explanations, solved examples, previous year questions, and practice questions — all in an easy-to-understand, exam-oriented format."
-              }
+                text: "You get written notes, topic-wise explanations, solved examples, previous year questions, and practice questions — all in an easy-to-understand, exam-oriented format.",
+              },
             },
             {
               "@type": "Question",
-              "name": "How long do I get access?",
-              "acceptedAnswer": {
+              name: "How long do I get access?",
+              acceptedAnswer: {
                 "@type": "Answer",
-                "text": "You get lifetime access, including free updates whenever the syllabus or exam pattern changes."
-              }
+                text: "You get lifetime access, including free updates whenever the syllabus or exam pattern changes.",
+              },
             },
             {
               "@type": "Question",
-              "name": "Can I ask doubts if I get stuck?",
-              "acceptedAnswer": {
+              name: "Can I ask doubts if I get stuck?",
+              acceptedAnswer: {
                 "@type": "Answer",
-                "text": "Yes, we offer Telegram/WhatsApp group support where you can get your doubts solved quickly."
-              }
-            }
-          ]
-        }
+                text: "Yes, we offer Telegram/WhatsApp group support where you can get your doubts solved quickly.",
+              },
+            },
+          ],
+        };
 
       default:
-        return {}
+        return {};
     }
-  }
+  };
 
   return (
     <Script
       id={`structured-data-${type}`}
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(getStructuredData())
+        __html: JSON.stringify(getStructuredData()),
       }}
     />
-  )
+  );
 }
